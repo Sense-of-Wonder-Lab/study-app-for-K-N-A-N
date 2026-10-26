@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.0.1';
 const STORE_KEY = 'manabi_v1'; // 同じドメインの他ゲームと衝突しないよう接頭辞付き
 
 /* ========== テーマ(子どもごとの見た目) ========== */
@@ -159,13 +159,8 @@ const sound = (() => {
 })();
 document.addEventListener('touchstart', () => sound.unlock(), { once: true, passive: true });
 document.addEventListener('mousedown', () => sound.unlock(), { once: true });
-// iOSのダブルタップ拡大を防ぐ
-let lastTouch = 0;
-document.addEventListener('touchend', e => {
-  const n = Date.now();
-  if (n - lastTouch < 350 && !e.target.closest('input,select')) e.preventDefault();
-  lastTouch = n;
-}, { passive: false });
+// ダブルタップ拡大は CSS の touch-action:manipulation で止めている
+// (以前の touchend での止め方は、すばやい連打の2回目を消してしまっていた)
 
 /* ========== ユーティリティ ========== */
 const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
@@ -426,7 +421,14 @@ function showCalc() {
     if (k === 'del') { b.textContent = 'けす'; b.className = 'del'; }
     else if (k === '') { b.style.visibility = 'hidden'; }
     else b.textContent = k;
-    b.addEventListener('click', () => key(k));
+    // 指が ふれた しゅんかんに 反応(はなすのを またない)
+    b.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      b.classList.add('pressed');
+      key(k);
+    });
+    const up = () => b.classList.remove('pressed');
+    b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
     box.appendChild(b);
   });
 })();
@@ -455,12 +457,12 @@ function answerCalc() {
     game.i++;
     if (game.kind === 'ta') {
       game.count++; $('#ta-n').textContent = game.count;
-      setTimeout(() => { if (screen === 'calc-play' && game.kind === 'ta' && game.left > 0) showCalc(); }, 250);
+      setTimeout(() => { if (screen === 'calc-play' && game.kind === 'ta' && game.left > 0) showCalc(); }, 120);
       return;
     }
     if (game.i >= SET_SIZE) { defeat(); return; }
     updateHP();
-    setTimeout(() => { if (screen === 'calc-play') showCalc(); }, 550);
+    setTimeout(() => { if (screen === 'calc-play') showCalc(); }, 220);
     return;
   }
   // まちがい: すすまない。けして やりなおし
@@ -472,7 +474,7 @@ function answerCalc() {
     if (screen !== 'calc-play') return;
     typed = ''; locked = false;
     $('#calc-a').textContent = '';
-  }, game.kind === 'ta' ? 400 : 700);
+  }, game.kind === 'ta' ? 200 : 300);
 }
 
 /* ---------- 60びょう アタック ---------- */

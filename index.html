@@ -62,14 +62,14 @@ h2{font-size:30px;margin:0;text-align:center}
 .hp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ff5a5a,#ff9f2e);border-radius:9px;transition:width .35s}
 .hpnum{flex-shrink:0;font-size:16px;color:var(--sub);font-weight:700;min-width:3.5em;text-align:right}
 .mon{height:250px;display:flex;justify-content:center;align-items:flex-end}
-.mon svg{height:100%;width:auto;animation:bob 2.2s ease-in-out infinite;transform-origin:50% 90%}
+.mon svg{height:100%;width:auto;will-change:transform;animation:bob 2.2s ease-in-out infinite;transform-origin:50% 90%}
 @keyframes bob{0%,100%{transform:translateY(0) scale(1,1)}50%{transform:translateY(-6px) scale(1.02,.98)}}
 .mon.hit svg{animation:hit .45s}
-@keyframes hit{0%{transform:translateX(0);filter:brightness(1)}15%{transform:translateX(-14px) rotate(-6deg);filter:brightness(2.2)}35%{transform:translateX(12px) rotate(5deg)}55%{transform:translateX(-8px);filter:brightness(1.6)}100%{transform:translateX(0);filter:brightness(1)}}
+@keyframes hit{0%{transform:translateX(0);opacity:1}15%{transform:translateX(-14px) rotate(-6deg);opacity:.35}35%{transform:translateX(12px) rotate(5deg);opacity:1}55%{transform:translateX(-8px);opacity:.5}100%{transform:translateX(0);opacity:1}}
 .mon.attack svg{animation:atk .55s}
 @keyframes atk{0%{transform:scale(1)}30%{transform:scale(1.35) translateY(12px)}60%{transform:scale(.95)}100%{transform:scale(1)}}
 .mon.down svg{animation:down .9s forwards}
-@keyframes down{0%{transform:rotate(0) scale(1);opacity:1;filter:brightness(1)}30%{filter:brightness(2.5)}100%{transform:rotate(200deg) scale(0);opacity:0}}
+@keyframes down{0%{transform:rotate(0) scale(1);opacity:1}100%{transform:rotate(200deg) scale(0);opacity:0}}
 .dmg{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);font-size:44px;font-weight:900;color:#ff5a5a;
   -webkit-text-stroke:2px #fff;pointer-events:none;opacity:0;white-space:nowrap}
 .dmg.show{animation:dmg .8s}
@@ -88,7 +88,8 @@ h2{font-size:30px;margin:0;text-align:center}
 .answer{font-size:54px;font-weight:800;min-height:72px;border-bottom:4px dashed var(--line);display:inline-block;min-width:200px;color:var(--accent2)}
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:520px;width:100%;margin:0 auto}
 .keypad button{background:var(--card);border-radius:20px;font-size:42px;font-weight:800;padding:22px 0;box-shadow:0 5px 0 var(--line)}
-.keypad button:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line)}
+.keypad button:active,.keypad button.pressed{transform:translateY(3px);box-shadow:0 2px 0 var(--line);background:var(--line)}
+.keypad button{touch-action:none}
 .keypad .del{font-size:26px;color:var(--sub)}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .choices button{background:var(--card);border-radius:22px;padding:16px 10px;font-size:32px;font-weight:800;box-shadow:0 5px 0 var(--line);min-height:100px;line-height:1.25}
@@ -100,7 +101,7 @@ h2{font-size:30px;margin:0;text-align:center}
 .choices.eight{grid-template-columns:repeat(4,1fr)}
 .choices.eight button{font-size:26px;min-height:84px}
 .feedback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:150px;pointer-events:none;opacity:0}
-.feedback.show{animation:pop .7s}
+.feedback.show{animation:pop .45s}
 @keyframes pop{0%{opacity:0;transform:scale(.4)}25%{opacity:1;transform:scale(1.1)}80%{opacity:1}100%{opacity:0;transform:scale(1)}}
 .correct-ans{font-size:24px;color:var(--ng);min-height:32px;font-weight:700}
 .combo{font-size:22px;font-weight:900;color:var(--accent);min-height:30px}
