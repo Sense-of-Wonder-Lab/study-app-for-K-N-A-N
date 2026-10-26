@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.1.1';
 const STORE_KEY = 'manabi_v1'; // 同じドメインの他ゲームと衝突しないよう接頭辞付き
 
 /* ========== 保存データ ========== */
@@ -174,7 +174,7 @@ const CALC_LEVELS = [
         if ((a % 10 < b % 10) !== borrow) continue;
         return [`${a} − ${b}`, d];
       } } },
-  { id: 'c5', grade: 2, emoji: '⭐', name: 'かけざん九九', note: '2〜9のだん', gen() { const a = rnd(2, 9), b = rnd(1, 9); return [`${a} × ${b}`, a * b]; } },
+  { id: 'c5', grade: 2, grades: [1, 2, 3, 4], emoji: '⭐', name: 'かけざん九九', note: '2〜9のだん', gen() { const a = rnd(2, 9), b = rnd(1, 9); return [`${a} × ${b}`, a * b]; } },
   { id: 'c6', grade: 3, emoji: '🍰', name: 'わりざん', note: '九九を つかう', gen() { const b = rnd(2, 9), q = rnd(1, 9); return [`${b * q} ÷ ${b}`, q]; } },
   { id: 'c7', grade: 3, emoji: '🧮', name: '3けたの たし算・ひき算', note: '352 + 478 など', gen() {
       if (Math.random() < 0.5) { const a = rnd(100, 899), b = rnd(100, 999 - a); return [`${a} + ${b}`, a + b]; }
@@ -218,7 +218,7 @@ RENDER['calc-menu'] = () => {
   const box = $('#calc-levels'); box.innerHTML = '';
   const rec = DB.records[current] || {};
   // 基本は「その学年と、2学年下まで」の問題を表示(復習も含める)
-  const list = showAllCalc ? CALC_LEVELS : CALC_LEVELS.filter(l => l.grade <= p.grade && l.grade >= p.grade - 2);
+  const list = showAllCalc ? CALC_LEVELS : CALC_LEVELS.filter(l => l.grades ? l.grades.includes(p.grade) : (l.grade <= p.grade && l.grade >= p.grade - 2));
   list.forEach(l => {
     const b = document.createElement('button');
     b.className = 'big';
