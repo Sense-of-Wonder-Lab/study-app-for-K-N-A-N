@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#ffb84d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="まなびランド">
+<title>まなびランド</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#fff8ec; --card:#ffffff; --ink:#3b2f2a; --sub:#8a7a70;
+  --orange:#ff9f2e; --pink:#ff6f91; --blue:#4aa8ff; --green:#3cc47c; --purple:#9b7bff;
+  --line:#f0e2cf; --ok:#3cc47c; --ng:#ff5a5a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","BIZ UDPGothic","Noto Sans JP",sans-serif;
+  -webkit-user-select:none;user-select:none;touch-action:manipulation;overscroll-behavior:none}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button{font-family:inherit;color:inherit;border:none;cursor:pointer}
+#app{max-width:900px;margin:0 auto;padding:16px;min-height:100%;display:flex;flex-direction:column}
+.screen{display:none;flex-direction:column;flex:1;gap:16px}
+.screen.on{display:flex}
+h1{font-size:40px;margin:8px 0 0;text-align:center;letter-spacing:.05em}
+h2{font-size:30px;margin:0;text-align:center}
+.sub{color:var(--sub);text-align:center;font-size:18px;margin:0}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.big{background:var(--card);border-radius:24px;padding:24px 16px;font-size:28px;font-weight:700;
+  box-shadow:0 6px 0 var(--line);display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .08s}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 var(--line)}
+.big .emoji{font-size:56px;line-height:1}
+.big .note{font-size:16px;font-weight:400;color:var(--sub)}
+.big.locked{opacity:.45}
+.bar{display:flex;align-items:center;gap:12px}
+.bar .grow{flex:1}
+.pill{background:var(--card);border-radius:999px;padding:10px 18px;font-size:20px;font-weight:700;box-shadow:0 3px 0 var(--line)}
+.back{background:var(--card);border-radius:16px;padding:12px 18px;font-size:20px;font-weight:700;box-shadow:0 3px 0 var(--line)}
+.timebox{flex:1;background:var(--card);border-radius:16px;padding:8px 14px;box-shadow:0 3px 0 var(--line)}
+.timebox .lbl{font-size:16px;color:var(--sub);display:flex;justify-content:space-between}
+.timebox .lbl b{color:var(--ink);font-size:20px}
+.meter{height:12px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:4px}
+.meter i{display:block;height:100%;background:var(--green);border-radius:6px;transition:width .5s}
+.meter i.low{background:var(--orange)} .meter i.crit{background:var(--ng)}
+/* 問題 */
+.qcard{background:var(--card);border-radius:28px;padding:24px;text-align:center;box-shadow:0 6px 0 var(--line);position:relative}
+.qnum{font-size:18px;color:var(--sub)}
+.question{font-size:64px;font-weight:800;margin:8px 0;line-height:1.3;word-break:keep-all}
+.question.small{font-size:44px}
+.answer{font-size:56px;font-weight:800;min-height:80px;border-bottom:4px dashed var(--line);display:inline-block;min-width:200px;color:var(--blue)}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:520px;width:100%;margin:0 auto}
+.keypad button{background:var(--card);border-radius:20px;font-size:40px;font-weight:800;padding:16px 0;box-shadow:0 5px 0 var(--line)}
+.keypad button:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line)}
+.keypad .go{background:var(--green);color:#fff;box-shadow:0 5px 0 #2a9a5f;font-size:30px}
+.keypad .del{font-size:26px;color:var(--sub)}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.choices button{background:var(--card);border-radius:22px;padding:20px 10px;font-size:32px;font-weight:800;box-shadow:0 5px 0 var(--line);min-height:110px;line-height:1.25}
+.choices button small{display:block;font-size:17px;font-weight:400;color:var(--sub)}
+.choices button.right{background:var(--ok);color:#fff;box-shadow:0 5px 0 #2a9a5f}
+.choices button.right small{color:#eafff2}
+.choices button.wrong{background:var(--ng);color:#fff;box-shadow:0 5px 0 #c94040}
+.choices.eight{grid-template-columns:repeat(4,1fr)}
+.choices.eight button{font-size:26px;min-height:90px}
+.feedback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:160px;pointer-events:none;opacity:0}
+.feedback.show{animation:pop .7s}
+@keyframes pop{0%{opacity:0;transform:scale(.4)}25%{opacity:1;transform:scale(1.1)}80%{opacity:1}100%{opacity:0;transform:scale(1)}}
+.correct-ans{font-size:24px;color:var(--ng);min-height:34px;font-weight:700}
+.progress{display:flex;gap:6px;justify-content:center}
+.progress span{width:22px;height:22px;border-radius:50%;background:var(--line)}
+.progress span.ok{background:var(--ok)} .progress span.ng{background:var(--ng)} .progress span.now{outline:3px solid var(--blue)}
+/* 結果 */
+.result{text-align:center;background:var(--card);border-radius:28px;padding:32px;box-shadow:0 6px 0 var(--line)}
+.stars{font-size:72px;letter-spacing:8px}
+.score{font-size:48px;font-weight:800}
+.btnrow{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn{border-radius:20px;padding:18px 28px;font-size:26px;font-weight:800;box-shadow:0 5px 0 rgba(0,0,0,.15);color:#fff;background:var(--blue)}
+.btn.orange{background:var(--orange)} .btn.gray{background:#b9aca2}
+/* おしまい */
+.timeup{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px}
+.timeup .emoji{font-size:120px}
+/* 保護者 */
+.panel{background:var(--card);border-radius:20px;padding:20px;box-shadow:0 4px 0 var(--line);display:flex;flex-direction:column;gap:14px}
+.panel h3{margin:0;font-size:22px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:18px}
+.row input,.row select{font-size:20px;padding:10px;border-radius:12px;border:2px solid var(--line);font-family:inherit;background:#fff;color:var(--ink);-webkit-user-select:text;user-select:text}
+.row input[type=text]{width:9em}
+.sbtn{border-radius:12px;padding:10px 16px;font-size:18px;font-weight:700;background:var(--line)}
+.sbtn.primary{background:var(--blue);color:#fff} .sbtn.danger{background:#ffe0e0;color:#c03030}
+.pinpad{display:grid;grid-template-columns:repeat(3,90px);gap:12px;justify-content:center}
+.pinpad button{background:var(--card);border-radius:18px;font-size:34px;font-weight:800;height:80px;box-shadow:0 4px 0 var(--line)}
+.pindots{font-size:44px;letter-spacing:14px;text-align:center;min-height:56px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#3b2f2a;color:#fff;padding:14px 22px;border-radius:16px;font-size:18px;display:none;gap:14px;align-items:center;z-index:50}
+.toast.on{display:flex}
+.toast button{background:var(--orange);color:#fff;border-radius:10px;padding:8px 14px;font-size:18px;font-weight:700}
+.gear{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));background:var(--card);border-radius:50%;width:56px;height:56px;font-size:28px;box-shadow:0 3px 0 var(--line);opacity:.7}
+.levels .big{font-size:24px;padding:18px 12px}
+.levels .best{font-size:16px;color:var(--orange);font-weight:700;min-height:20px}
+.toggle{text-align:center}
+.toggle button{background:none;color:var(--sub);font-size:17px;text-decoration:underline}
+@media (max-width:600px){
+  .question{font-size:48px} .question.small{font-size:34px}
+  .choices button{font-size:24px;min-height:90px}
+  .choices.eight{grid-template-columns:1fr 1fr}
+  .keypad button{font-size:32px}
+  h1{font-size:32px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- だれがあそぶ? -->
+  <section class="screen" id="s-profiles">
+    <h1>まなびランド</h1>
+    <p class="sub">だれが あそぶ?</p>
+    <div class="grid" id="profile-list"></div>
+    <button class="gear" id="open-parent" aria-label="ほごしゃ せってい">⚙️</button>
+  </section>
+
+  <!-- ホーム -->
+  <section class="screen" id="s-home">
+    <div class="bar">
+      <button class="back" data-go="profiles">← もどる</button>
+      <div class="timebox"><div class="lbl"><span id="home-name"></span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
+    </div>
+    <h2>なにで あそぶ?</h2>
+    <div class="grid">
+      <button class="big" data-go="calc-menu"><span class="emoji">🔢</span>けいさん<span class="note">たしざん・かけざん など</span></button>
+      <button class="big" data-go="pref-menu"><span class="emoji">🗾</span>とどうふけん<span class="note">47 の けん を おぼえよう</span></button>
+    </div>
+  </section>
+
+  <!-- けいさん メニュー -->
+  <section class="screen" id="s-calc-menu">
+    <div class="bar">
+      <button class="back" data-go="home">← もどる</button>
+      <div class="timebox"><div class="lbl"><span>けいさん</span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
+    </div>
+    <div class="grid levels" id="calc-levels"></div>
+    <div class="toggle"><button id="calc-all">ほかの がくねんの もんだいも みる</button></div>
+  </section>
+
+  <!-- とどうふけん メニュー -->
+  <section class="screen" id="s-pref-menu">
+    <div class="bar">
+      <button class="back" data-go="home">← もどる</button>
+      <div class="timebox"><div class="lbl"><span>とどうふけん</span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
+    </div>
+    <div class="grid levels" id="pref-levels"></div>
+  </section>
+
+  <!-- けいさん プレイ -->
+  <section class="screen" id="s-calc-play">
+    <div class="bar">
+      <button class="back" id="calc-quit">✕ やめる</button>
+      <div class="timebox"><div class="lbl"><span id="calc-title"></span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
+    </div>
+    <div class="progress" id="calc-progress"></div>
+    <div class="qcard">
+      <div class="question" id="calc-q"></div>
+      <div class="answer" id="calc-a"></div>
+      <div class="correct-ans" id="calc-correct"></div>
+      <div class="feedback" id="calc-fb"></div>
+    </div>
+    <div class="keypad" id="keypad"></div>
+  </section>
+
+  <!-- とどうふけん プレイ -->
+  <section class="screen" id="s-pref-play">
+    <div class="bar">
+      <button class="back" id="pref-quit">✕ やめる</button>
+      <div class="timebox"><div class="lbl"><span id="pref-title"></span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
+    </div>
+    <div class="progress" id="pref-progress"></div>
+    <div class="qcard">
+      <div class="qnum" id="pref-prompt"></div>
+      <div class="question small" id="pref-q"></div>
+      <div class="feedback" id="pref-fb"></div>
+    </div>
+    <div class="choices" id="pref-choices"></div>
+  </section>
+
+  <!-- けっか -->
+  <section class="screen" id="s-result">
+    <div class="bar">
+      <div class="timebox"><div class="lbl"><span>けっか</span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
+    </div>
+    <div class="result">
+      <div class="stars" id="r-stars"></div>
+      <div class="score" id="r-score"></div>
+      <p class="sub" id="r-detail"></p>
+      <p class="sub" id="r-best"></p>
+    </div>
+    <div class="btnrow">
+      <button class="btn orange" id="r-again">もういちど</button>
+      <button class="btn" id="r-menu">ほかの もんだい</button>
+    </div>
+  </section>
+
+  <!-- おしまい -->
+  <section class="screen" id="s-timeup">
+    <div class="timeup">
+      <div class="emoji">🌙</div>
+      <h2 id="tu-title">きょうは ここまで!</h2>
+      <p class="sub" id="tu-text">また あした あそぼうね</p>
+      <button class="btn" data-go="profiles">さいしょの がめんへ</button>
+    </div>
+  </section>
+
+  <!-- 保護者: PIN -->
+  <section class="screen" id="s-pin">
+    <div class="bar"><button class="back" data-go="profiles">← もどる</button></div>
+    <h2 id="pin-title">保護者の暗証番号</h2>
+    <p class="sub" id="pin-sub">4けたの数字を入力してください</p>
+    <div class="pindots" id="pin-dots"></div>
+    <div class="pinpad" id="pinpad"></div>
+  </section>
+
+  <!-- 保護者: 設定 -->
+  <section class="screen" id="s-parent">
+    <div class="bar"><button class="back" data-go="profiles">← 終了</button><h2 class="grow">保護者設定</h2></div>
+    <div id="parent-body" style="display:flex;flex-direction:column;gap:16px"></div>
+  </section>
+
+</div>
+
+<div class="toast" id="update-toast"><span>新しいバージョンがあります</span><button id="update-btn">更新</button></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
