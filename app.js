@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.1.1';
+const APP_VERSION = '1.2.0';
 const STORE_KEY = 'manabi_v1'; // 同じドメインの他ゲームと衝突しないよう接頭辞付き
 
 /* ========== 保存データ ========== */
@@ -301,7 +301,7 @@ function startCalc(level) {
 }
 function showCalc() {
   $('#calc-fb').classList.remove('show');
-  typed = ''; locked = false;
+  typed = ''; locked = false; game.miss = 0;
   const it = game.items[game.i];
   $('#calc-q').textContent = it.q + ' =';
   $('#calc-a').textContent = '';
@@ -310,10 +310,10 @@ function showCalc() {
 }
 (function buildKeypad() {
   const box = $('#keypad');
-  ['7', '8', '9', '4', '5', '6', '1', '2', '3', 'del', '0', 'go'].forEach(k => {
+  ['7', '8', '9', '4', '5', '6', '1', '2', '3', '', '0', 'del'].forEach(k => {
     const b = document.createElement('button');
     if (k === 'del') { b.textContent = 'けす'; b.className = 'del'; }
-    else if (k === 'go') { b.textContent = 'こたえる'; b.className = 'go'; }
+    else if (k === '') { b.style.visibility = 'hidden'; }
     else b.textContent = k;
     b.addEventListener('click', () => key(k));
     box.appendChild(b);
@@ -322,29 +322,44 @@ function showCalc() {
 function key(k) {
   if (screen !== 'calc-play' || locked) return;
   if (k === 'del') { typed = typed.slice(0, -1); sound.tap(); }
-  else if (k === 'go') { if (typed !== '') answerCalc(); return; }
-  else if (typed.length < 5) { typed = (typed === '0' ? '' : typed) + k; sound.tap(); }
+  else if (k && typed.length < 5) { typed = (typed === '0' ? '' : typed) + k; sound.tap(); }
   $('#calc-a').textContent = typed;
+  // こたえと同じ けたすう まで うったら 自動で はんてい
+  if (typed.length >= String(game.items[game.i].a).length) answerCalc();
 }
 document.addEventListener('keydown', e => {
   if (screen !== 'calc-play') return;
   if (/^[0-9]$/.test(e.key)) key(e.key);
   else if (e.key === 'Backspace') key('del');
-  else if (e.key === 'Enter') key('go');
 });
 function answerCalc() {
   locked = true;
   const it = game.items[game.i];
   const ok = Number(typed) === it.a;
-  game.results[game.i] = ok;
   showFb('#calc-fb', ok);
-  if (ok) sound.ok(); else { sound.ng(); $('#calc-correct').textContent = `こたえは ${it.a}`; }
+  if (ok) {
+    // 1かいめで せいかい なら ⭕、まちがえてから せいかい は ❌ のまま
+    if (game.results[game.i] === undefined) game.results[game.i] = true;
+    sound.ok();
+    renderProgress('#calc-progress');
+    setTimeout(() => {
+      if (screen !== 'calc-play') return;
+      game.i++;
+      if (game.i >= SET_SIZE) finish(); else showCalc();
+    }, 600);
+    return;
+  }
+  // まちがい: すすまない。けして やりなおし
+  game.results[game.i] = false;
+  game.miss = (game.miss || 0) + 1;
+  sound.ng();
   renderProgress('#calc-progress');
+  if (game.miss >= 3) $('#calc-correct').textContent = `ヒント: こたえは ${it.a}`;
   setTimeout(() => {
     if (screen !== 'calc-play') return;
-    game.i++;
-    if (game.i >= SET_SIZE) finish(); else showCalc();
-  }, ok ? 700 : 1800);
+    typed = ''; locked = false;
+    $('#calc-a').textContent = '';
+  }, 700);
 }
 
 /* ========== とどうふけん プレイ ========== */
