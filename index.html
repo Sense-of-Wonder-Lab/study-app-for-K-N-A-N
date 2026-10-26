@@ -15,72 +15,125 @@
 <link rel="icon" href="icon-192.png">
 <style>
 :root{
-  --bg:#fff8ec; --card:#ffffff; --ink:#3b2f2a; --sub:#8a7a70;
-  --orange:#ff9f2e; --pink:#ff6f91; --blue:#4aa8ff; --green:#3cc47c; --purple:#9b7bff;
-  --line:#f0e2cf; --ok:#3cc47c; --ng:#ff5a5a;
+  --bg:#fff8ec; --card:#ffffff; --ink:#3b2f2a; --sub:#8a7a70; --accent:#ff9f2e; --accent2:#4aa8ff;
+  --line:#f0e2cf; --ok:#3cc47c; --ng:#ff5a5a; --orange:#ff9f2e; --blue:#4aa8ff; --green:#3cc47c;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);transition:background .3s;
   font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","BIZ UDPGothic","Noto Sans JP",sans-serif;
   -webkit-user-select:none;user-select:none;touch-action:manipulation;overscroll-behavior:none}
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 button{font-family:inherit;color:inherit;border:none;cursor:pointer}
-#app{max-width:900px;margin:0 auto;padding:16px;min-height:100%;display:flex;flex-direction:column}
+#app{max-width:1100px;margin:0 auto;padding:16px;min-height:100%;display:flex;flex-direction:column}
 .screen{display:none;flex-direction:column;flex:1;gap:16px}
 .screen.on{display:flex}
 h1{font-size:40px;margin:8px 0 0;text-align:center;letter-spacing:.05em}
 h2{font-size:30px;margin:0;text-align:center}
+.title{color:var(--accent);font-size:36px}
 .sub{color:var(--sub);text-align:center;font-size:18px;margin:0}
 .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-.big{background:var(--card);border-radius:24px;padding:24px 16px;font-size:28px;font-weight:700;
-  box-shadow:0 6px 0 var(--line);display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .08s}
+.big{background:var(--card);border-radius:24px;padding:22px 14px;font-size:26px;font-weight:700;
+  box-shadow:0 6px 0 var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;transition:transform .08s}
 .big:active{transform:translateY(4px);box-shadow:0 2px 0 var(--line)}
 .big .emoji{font-size:56px;line-height:1}
 .big .note{font-size:16px;font-weight:400;color:var(--sub)}
 .big.locked{opacity:.45}
 .bar{display:flex;align-items:center;gap:12px}
 .bar .grow{flex:1}
-.pill{background:var(--card);border-radius:999px;padding:10px 18px;font-size:20px;font-weight:700;box-shadow:0 3px 0 var(--line)}
-.back{background:var(--card);border-radius:16px;padding:12px 18px;font-size:20px;font-weight:700;box-shadow:0 3px 0 var(--line)}
+.back{background:var(--card);border-radius:16px;padding:12px 18px;font-size:20px;font-weight:700;box-shadow:0 3px 0 var(--line);white-space:nowrap}
 .timebox{flex:1;background:var(--card);border-radius:16px;padding:8px 14px;box-shadow:0 3px 0 var(--line)}
-.timebox .lbl{font-size:16px;color:var(--sub);display:flex;justify-content:space-between}
+.timebox .lbl{font-size:16px;color:var(--sub);display:flex;justify-content:space-between;gap:8px}
 .timebox .lbl b{color:var(--ink);font-size:20px}
 .meter{height:12px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:4px}
 .meter i{display:block;height:100%;background:var(--green);border-radius:6px;transition:width .5s}
 .meter i.low{background:var(--orange)} .meter i.crit{background:var(--ng)}
-/* 問題 */
-.qcard{background:var(--card);border-radius:28px;padding:24px;text-align:center;box-shadow:0 6px 0 var(--line);position:relative}
+/* モード切りかえ */
+.seg{display:flex;background:var(--card);border-radius:18px;padding:6px;box-shadow:0 3px 0 var(--line);gap:6px}
+.seg button{flex:1;padding:14px 8px;border-radius:14px;font-size:22px;font-weight:800;background:transparent;color:var(--sub)}
+.seg button.on{background:var(--accent);color:#fff}
+/* プレイ画面 */
+.playwrap{display:flex;flex-direction:column;gap:14px;flex:1}
+.stage{display:flex;flex-direction:column;gap:12px}
+.arena{background:var(--card);border-radius:28px;box-shadow:0 6px 0 var(--line);padding:12px 16px 6px;position:relative;overflow:hidden}
+.mon-head{display:flex;align-items:center;gap:12px}
+.mon-name{font-size:22px;font-weight:800;white-space:nowrap}
+.mon-name .boss{background:#ffd23f;color:#5a4300;border-radius:8px;padding:2px 8px;font-size:15px;margin-right:6px;vertical-align:middle}
+.hp{flex:1;height:18px;background:var(--line);border-radius:9px;overflow:hidden;border:2px solid var(--line)}
+.hp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ff5a5a,#ff9f2e);border-radius:9px;transition:width .35s}
+.hpnum{flex-shrink:0;font-size:16px;color:var(--sub);font-weight:700;min-width:3.5em;text-align:right}
+.mon{height:250px;display:flex;justify-content:center;align-items:flex-end}
+.mon svg{height:100%;width:auto;animation:bob 2.2s ease-in-out infinite;transform-origin:50% 90%}
+@keyframes bob{0%,100%{transform:translateY(0) scale(1,1)}50%{transform:translateY(-6px) scale(1.02,.98)}}
+.mon.hit svg{animation:hit .45s}
+@keyframes hit{0%{transform:translateX(0);filter:brightness(1)}15%{transform:translateX(-14px) rotate(-6deg);filter:brightness(2.2)}35%{transform:translateX(12px) rotate(5deg)}55%{transform:translateX(-8px);filter:brightness(1.6)}100%{transform:translateX(0);filter:brightness(1)}}
+.mon.attack svg{animation:atk .55s}
+@keyframes atk{0%{transform:scale(1)}30%{transform:scale(1.35) translateY(12px)}60%{transform:scale(.95)}100%{transform:scale(1)}}
+.mon.down svg{animation:down .9s forwards}
+@keyframes down{0%{transform:rotate(0) scale(1);opacity:1;filter:brightness(1)}30%{filter:brightness(2.5)}100%{transform:rotate(200deg) scale(0);opacity:0}}
+.dmg{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);font-size:44px;font-weight:900;color:#ff5a5a;
+  -webkit-text-stroke:2px #fff;pointer-events:none;opacity:0;white-space:nowrap}
+.dmg.show{animation:dmg .8s}
+@keyframes dmg{0%{opacity:0;transform:translate(-50%,-20%) scale(.6)}25%{opacity:1;transform:translate(-50%,-60%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-140%) scale(1)}}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.ta{display:flex;justify-content:space-around;align-items:center;height:220px}
+.ta div{text-align:center}
+.ta b{display:block;font-size:84px;line-height:1.1}
+.ta span{font-size:20px;color:var(--sub)}
+.ta .t b{color:var(--accent2)} .ta .t.crit b{color:var(--ng)}
+.qcard{background:var(--card);border-radius:28px;padding:16px 20px;text-align:center;box-shadow:0 6px 0 var(--line);position:relative}
 .qnum{font-size:18px;color:var(--sub)}
-.question{font-size:64px;font-weight:800;margin:8px 0;line-height:1.3;word-break:keep-all}
-.question.small{font-size:44px}
-.answer{font-size:56px;font-weight:800;min-height:80px;border-bottom:4px dashed var(--line);display:inline-block;min-width:200px;color:var(--blue)}
+.question{font-size:60px;font-weight:800;margin:4px 0;line-height:1.25;word-break:keep-all}
+.question.small{font-size:42px}
+.answer{font-size:54px;font-weight:800;min-height:72px;border-bottom:4px dashed var(--line);display:inline-block;min-width:200px;color:var(--accent2)}
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:520px;width:100%;margin:0 auto}
-.keypad button{background:var(--card);border-radius:20px;font-size:40px;font-weight:800;padding:16px 0;box-shadow:0 5px 0 var(--line)}
+.keypad button{background:var(--card);border-radius:20px;font-size:42px;font-weight:800;padding:22px 0;box-shadow:0 5px 0 var(--line)}
 .keypad button:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line)}
-.keypad .go{background:var(--green);color:#fff;box-shadow:0 5px 0 #2a9a5f;font-size:30px}
 .keypad .del{font-size:26px;color:var(--sub)}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.choices button{background:var(--card);border-radius:22px;padding:20px 10px;font-size:32px;font-weight:800;box-shadow:0 5px 0 var(--line);min-height:110px;line-height:1.25}
+.choices button{background:var(--card);border-radius:22px;padding:16px 10px;font-size:32px;font-weight:800;box-shadow:0 5px 0 var(--line);min-height:100px;line-height:1.25}
 .choices button small{display:block;font-size:17px;font-weight:400;color:var(--sub)}
 .choices button.right{background:var(--ok);color:#fff;box-shadow:0 5px 0 #2a9a5f}
 .choices button.right small{color:#eafff2}
-.choices button.wrong{background:var(--ng);color:#fff;box-shadow:0 5px 0 #c94040}
+.choices button.wrong{background:var(--ng);color:#fff;box-shadow:0 5px 0 #c94040;opacity:.55}
+.choices button.wrong small{color:#fff}
 .choices.eight{grid-template-columns:repeat(4,1fr)}
-.choices.eight button{font-size:26px;min-height:90px}
-.feedback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:160px;pointer-events:none;opacity:0}
+.choices.eight button{font-size:26px;min-height:84px}
+.feedback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:150px;pointer-events:none;opacity:0}
 .feedback.show{animation:pop .7s}
 @keyframes pop{0%{opacity:0;transform:scale(.4)}25%{opacity:1;transform:scale(1.1)}80%{opacity:1}100%{opacity:0;transform:scale(1)}}
-.correct-ans{font-size:24px;color:var(--ng);min-height:34px;font-weight:700}
-.progress{display:flex;gap:6px;justify-content:center}
-.progress span{width:22px;height:22px;border-radius:50%;background:var(--line)}
-.progress span.ok{background:var(--ok)} .progress span.ng{background:var(--ng)} .progress span.now{outline:3px solid var(--blue)}
+.correct-ans{font-size:24px;color:var(--ng);min-height:32px;font-weight:700}
+.combo{font-size:22px;font-weight:900;color:var(--accent);min-height:30px}
 /* 結果 */
-.result{text-align:center;background:var(--card);border-radius:28px;padding:32px;box-shadow:0 6px 0 var(--line)}
-.stars{font-size:72px;letter-spacing:8px}
-.score{font-size:48px;font-weight:800}
+.result{text-align:center;background:var(--card);border-radius:28px;padding:24px;box-shadow:0 6px 0 var(--line);display:flex;flex-direction:column;align-items:center;gap:6px}
+.r-mon{height:200px} .r-mon svg{height:100%;animation:bob 2.2s ease-in-out infinite}
+.r-mon.appear svg{animation:appear .8s, bob 2.2s ease-in-out .8s infinite}
+@keyframes appear{0%{transform:scale(0) rotate(-30deg);opacity:0}60%{transform:scale(1.2) rotate(8deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+.r-get{font-size:30px;font-weight:900}
+.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;min-height:34px}
+.badge{border-radius:999px;padding:4px 14px;font-size:18px;font-weight:800;color:#fff;background:var(--ng)}
+.badge.kira{background:linear-gradient(90deg,#ff5e8a,#ffb12e,#45d483,#4aa8ff)}
+.badge.best{background:var(--accent2)}
+.stars{font-size:52px;letter-spacing:6px}
+.score{font-size:40px;font-weight:800}
 .btnrow{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-.btn{border-radius:20px;padding:18px 28px;font-size:26px;font-weight:800;box-shadow:0 5px 0 rgba(0,0,0,.15);color:#fff;background:var(--blue)}
-.btn.orange{background:var(--orange)} .btn.gray{background:#b9aca2}
+.btn{border-radius:20px;padding:18px 28px;font-size:26px;font-weight:800;box-shadow:0 5px 0 rgba(0,0,0,.15);color:#fff;background:var(--accent2)}
+.btn.main{background:var(--accent)}
+/* ずかん */
+.zk-count{font-size:22px;font-weight:800;text-align:center}
+.zk-group{background:var(--card);border-radius:22px;padding:14px;box-shadow:0 4px 0 var(--line)}
+.zk-group h3{margin:0 0 8px;font-size:20px}
+.zk-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.zk-cell{background:var(--bg);border-radius:16px;padding:6px 4px 8px;text-align:center;font-size:15px;font-weight:700;position:relative}
+.zk-cell svg{width:100%;height:auto;max-height:120px}
+.zk-cell .k{position:absolute;top:4px;right:6px;font-size:18px}
+.zk-cell.none{color:var(--sub)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:40;padding:20px}
+.modal.on{display:flex}
+.modal .box{background:var(--card);border-radius:28px;padding:24px;text-align:center;max-width:420px;width:100%}
+.modal .box svg{width:240px;height:240px;animation:bob 2.2s ease-in-out infinite}
+.modal .box h3{font-size:30px;margin:4px 0}
+.modal .box p{color:var(--sub);font-size:18px;margin:4px 0}
 /* おしまい */
 .timeup{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px}
 .timeup .emoji{font-size:120px}
@@ -88,7 +141,7 @@ h2{font-size:30px;margin:0;text-align:center}
 .panel{background:var(--card);border-radius:20px;padding:20px;box-shadow:0 4px 0 var(--line);display:flex;flex-direction:column;gap:14px}
 .panel h3{margin:0;font-size:22px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:18px}
-.row input,.row select{font-size:20px;padding:10px;border-radius:12px;border:2px solid var(--line);font-family:inherit;background:#fff;color:var(--ink);-webkit-user-select:text;user-select:text}
+.row input,.row select{font-size:20px;padding:10px;border-radius:12px;border:2px solid var(--line);font-family:inherit;background:#fff;color:#3b2f2a;-webkit-user-select:text;user-select:text}
 .row input[type=text]{width:9em}
 .sbtn{border-radius:12px;padding:10px 16px;font-size:18px;font-weight:700;background:var(--line)}
 .sbtn.primary{background:var(--blue);color:#fff} .sbtn.danger{background:#ffe0e0;color:#c03030}
@@ -99,16 +152,29 @@ h2{font-size:30px;margin:0;text-align:center}
 .toast.on{display:flex}
 .toast button{background:var(--orange);color:#fff;border-radius:10px;padding:8px 14px;font-size:18px;font-weight:700}
 .gear{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));background:var(--card);border-radius:50%;width:56px;height:56px;font-size:28px;box-shadow:0 3px 0 var(--line);opacity:.7}
-.levels .big{font-size:24px;padding:18px 12px}
-.levels .best{font-size:16px;color:var(--orange);font-weight:700;min-height:20px}
+.levels .big{font-size:22px;padding:16px 10px}
+.levels .best{font-size:16px;color:var(--accent);font-weight:700;min-height:20px}
+.levels .mini{display:flex;gap:2px;justify-content:center;min-height:34px}
+.levels .mini svg{width:34px;height:34px}
 .toggle{text-align:center}
 .toggle button{background:none;color:var(--sub);font-size:17px;text-decoration:underline}
+/* よこむき タブレット: 左に かいじゅう+もんだい、右に ボタン */
+@media (orientation:landscape) and (min-width:900px){
+  .playwrap{display:grid;grid-template-columns:1.15fr 1fr;align-items:start}
+  .mon{height:230px} .ta{height:230px}
+  .keypad{margin-top:4px}
+  .keypad button{padding:30px 0}
+  .choices button{min-height:120px}
+}
 @media (max-width:600px){
-  .question{font-size:48px} .question.small{font-size:34px}
-  .choices button{font-size:24px;min-height:90px}
+  .question{font-size:46px} .question.small{font-size:32px}
+  .choices button{font-size:24px;min-height:84px}
   .choices.eight{grid-template-columns:1fr 1fr}
   .keypad button{font-size:32px}
+  .mon{height:150px}
+  .keypad button{padding:14px 0}
   h1{font-size:32px}
+  .zk-row{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -129,10 +195,11 @@ h2{font-size:30px;margin:0;text-align:center}
       <button class="back" data-go="profiles">← もどる</button>
       <div class="timebox"><div class="lbl"><span id="home-name"></span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
     </div>
-    <h2>なにで あそぶ?</h2>
+    <h2 class="title" id="home-title"></h2>
     <div class="grid">
-      <button class="big" data-go="calc-menu"><span class="emoji">🔢</span>けいさん<span class="note">たしざん・かけざん など</span></button>
+      <button class="big" data-go="calc-menu"><span class="emoji">🔢</span>けいさん<span class="note">かいじゅうと バトル!</span></button>
       <button class="big" data-go="pref-menu"><span class="emoji">🗾</span>とどうふけん<span class="note">47 の けん を おぼえよう</span></button>
+      <button class="big" data-go="zukan"><span class="emoji">📖</span>かいじゅう ずかん<span class="note" id="home-zk"></span></button>
     </div>
   </section>
 
@@ -141,6 +208,10 @@ h2{font-size:30px;margin:0;text-align:center}
     <div class="bar">
       <button class="back" data-go="home">← もどる</button>
       <div class="timebox"><div class="lbl"><span>けいさん</span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
+    </div>
+    <div class="seg" id="mode-seg">
+      <button data-mode="battle">⚔️ バトル (10もん)</button>
+      <button data-mode="ta">⏱️ 60びょう アタック</button>
     </div>
     <div class="grid levels" id="calc-levels"></div>
     <div class="toggle"><button id="calc-all">ほかの がくねんの もんだいも みる</button></div>
@@ -161,14 +232,18 @@ h2{font-size:30px;margin:0;text-align:center}
       <button class="back" id="calc-quit">✕ やめる</button>
       <div class="timebox"><div class="lbl"><span id="calc-title"></span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
     </div>
-    <div class="progress" id="calc-progress"></div>
-    <div class="qcard">
-      <div class="question" id="calc-q"></div>
-      <div class="answer" id="calc-a"></div>
-      <div class="correct-ans" id="calc-correct"></div>
-      <div class="feedback" id="calc-fb"></div>
+    <div class="playwrap" id="calc-wrap">
+      <div class="stage">
+        <div class="arena" id="calc-arena"></div>
+        <div class="qcard">
+          <div class="question" id="calc-q"></div>
+          <div class="answer" id="calc-a"></div>
+          <div class="correct-ans" id="calc-correct"></div>
+          <div class="feedback" id="calc-fb"></div>
+        </div>
+      </div>
+      <div class="keypad" id="keypad"></div>
     </div>
-    <div class="keypad" id="keypad"></div>
   </section>
 
   <!-- とどうふけん プレイ -->
@@ -177,13 +252,17 @@ h2{font-size:30px;margin:0;text-align:center}
       <button class="back" id="pref-quit">✕ やめる</button>
       <div class="timebox"><div class="lbl"><span id="pref-title"></span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
     </div>
-    <div class="progress" id="pref-progress"></div>
-    <div class="qcard">
-      <div class="qnum" id="pref-prompt"></div>
-      <div class="question small" id="pref-q"></div>
-      <div class="feedback" id="pref-fb"></div>
+    <div class="playwrap" id="pref-wrap">
+      <div class="stage">
+        <div class="arena" id="pref-arena"></div>
+        <div class="qcard">
+          <div class="qnum" id="pref-prompt"></div>
+          <div class="question small" id="pref-q"></div>
+          <div class="feedback" id="pref-fb"></div>
+        </div>
+      </div>
+      <div class="choices" id="pref-choices"></div>
     </div>
-    <div class="choices" id="pref-choices"></div>
   </section>
 
   <!-- けっか -->
@@ -192,15 +271,28 @@ h2{font-size:30px;margin:0;text-align:center}
       <div class="timebox"><div class="lbl"><span>けっか</span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
     </div>
     <div class="result">
+      <div class="r-mon" id="r-mon"></div>
+      <div class="r-get" id="r-get"></div>
+      <div class="badges" id="r-badges"></div>
       <div class="stars" id="r-stars"></div>
       <div class="score" id="r-score"></div>
       <p class="sub" id="r-detail"></p>
       <p class="sub" id="r-best"></p>
     </div>
     <div class="btnrow">
-      <button class="btn orange" id="r-again">もういちど</button>
+      <button class="btn main" id="r-again">もういちど</button>
       <button class="btn" id="r-menu">ほかの もんだい</button>
     </div>
+  </section>
+
+  <!-- ずかん -->
+  <section class="screen" id="s-zukan">
+    <div class="bar">
+      <button class="back" data-go="home">← もどる</button>
+      <div class="timebox"><div class="lbl"><span>ずかん</span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
+    </div>
+    <div class="zk-count" id="zk-count"></div>
+    <div id="zk-list" style="display:flex;flex-direction:column;gap:14px"></div>
   </section>
 
   <!-- おしまい -->
@@ -230,9 +322,11 @@ h2{font-size:30px;margin:0;text-align:center}
 
 </div>
 
+<div class="modal" id="zk-modal"><div class="box" id="zk-box"></div></div>
 <div class="toast" id="update-toast"><span>新しいバージョンがあります</span><button id="update-btn">更新</button></div>
 
 <script src="data.js"></script>
+<script src="monsters.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
