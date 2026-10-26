@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 const STORE_KEY = 'manabi_v1'; // 同じドメインの他ゲームと衝突しないよう接頭辞付き
 
 /* ========== 保存データ ========== */
@@ -149,10 +149,31 @@ function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 
 /* ========== もんだい: けいさん ========== */
 const CALC_LEVELS = [
-  { id: 'c1', grade: 1, emoji: '🍎', name: 'たしざん', note: 'こたえが 10 まで', gen() { const a = rnd(0, 9), b = rnd(1, 10 - a); return [`${a} + ${b}`, a + b]; } },
-  { id: 'c2', grade: 1, emoji: '🍊', name: 'ひきざん', note: '10 までの かず', gen() { const a = rnd(2, 10), b = rnd(1, a); return [`${a} − ${b}`, a - b]; } },
-  { id: 'c3', grade: 1, emoji: '🚀', name: 'くりあがり', note: '9 + 5 など', gen() { const a = rnd(2, 9), b = rnd(11 - a, 9); return [`${a} + ${b}`, a + b]; } },
-  { id: 'c4', grade: 1, emoji: '🌈', name: 'くりさがり', note: '13 − 6 など', gen() { const a = rnd(11, 18), b = rnd(a - 9, 9); return [`${a} − ${b}`, a - b]; } },
+  // 小1 レベル1: くりあがり(こたえ 10〜18)
+  { id: 'g1L1a', grade: 1, emoji: '🚀', name: 'レベル1 くりあがり', note: '9 + 5 など(こたえ 10〜18)', gen() {
+      const a = rnd(1, 9), b = rnd(10 - a, 9); return [`${a} + ${b}`, a + b]; } },
+  // 小1 レベル1: くりさがり(こたえ 2〜9)
+  { id: 'g1L1b', grade: 1, emoji: '🌈', name: 'レベル1 くりさがり', note: '13 − 6 など(こたえ 2〜9)', gen() {
+      const a = rnd(10, 18), b = rnd(Math.max(a % 10 + 1, a - 9), Math.min(9, a - 2)); return [`${a} − ${b}`, a - b]; } },
+  // 小1 レベル2: 2けたの たしざん(こたえ 10〜99、くりあがり 7わり)
+  { id: 'g1L2a', grade: 1, emoji: '🦖', name: 'レベル2 たしざん', note: '2けた 38 + 27 など', gen() {
+      const carry = Math.random() < 0.7;
+      for (;;) {
+        const a = rnd(10, 98), b = Math.random() < 0.4 ? rnd(1, 9) : rnd(10, 89);
+        if (a + b > 99 || a + b < 10) continue;
+        if ((a % 10 + b % 10 >= 10) !== carry) continue;
+        return Math.random() < 0.3 && b < 10 ? [`${b} + ${a}`, a + b] : [`${a} + ${b}`, a + b];
+      } } },
+  // 小1 レベル2: 2けたの ひきざん(こたえ 2〜98、くりさがり 7わり)
+  { id: 'g1L2b', grade: 1, emoji: '🐲', name: 'レベル2 ひきざん', note: '2けた 52 − 19 など', gen() {
+      const borrow = Math.random() < 0.7;
+      for (;;) {
+        const a = rnd(11, 99), b = Math.random() < 0.4 ? rnd(1, 9) : rnd(10, 97);
+        const d = a - b;
+        if (d < 2 || d > 98) continue;
+        if ((a % 10 < b % 10) !== borrow) continue;
+        return [`${a} − ${b}`, d];
+      } } },
   { id: 'c5', grade: 2, emoji: '⭐', name: 'かけざん九九', note: '2〜9のだん', gen() { const a = rnd(2, 9), b = rnd(1, 9); return [`${a} × ${b}`, a * b]; } },
   { id: 'c6', grade: 3, emoji: '🍰', name: 'わりざん', note: '九九を つかう', gen() { const b = rnd(2, 9), q = rnd(1, 9); return [`${b * q} ÷ ${b}`, q]; } },
   { id: 'c7', grade: 3, emoji: '🧮', name: '3けたの たし算・ひき算', note: '352 + 478 など', gen() {
