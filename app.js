@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '2.0.1';
+const APP_VERSION = '3.0.0';
 const STORE_KEY = 'manabi_v1'; // 同じドメインの他ゲームと衝突しないよう接頭辞付き
 
 /* ========== テーマ(子どもごとの見た目) ========== */
@@ -163,49 +163,12 @@ document.addEventListener('mousedown', () => sound.unlock(), { once: true });
 // (以前の touchend での止め方は、すばやい連打の2回目を消してしまっていた)
 
 /* ========== ユーティリティ ========== */
-const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
-const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function replay(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 
-/* ========== もんだい: けいさん ========== */
-const CALC_LEVELS = [
-  // 小1 レベル1: くりあがり(こたえ 10〜18)
-  { id: 'g1L1a', grade: 1, emoji: '🚀', name: 'レベル1 くりあがり', note: '9 + 5 など(こたえ 10〜18)', gen() {
-      const a = rnd(1, 9), b = rnd(10 - a, 9); return [`${a} + ${b}`, a + b]; } },
-  // 小1 レベル1: くりさがり(こたえ 2〜9)
-  { id: 'g1L1b', grade: 1, emoji: '🌈', name: 'レベル1 くりさがり', note: '13 − 6 など(こたえ 2〜9)', gen() {
-      const a = rnd(10, 18), b = rnd(Math.max(a % 10 + 1, a - 9), Math.min(9, a - 2)); return [`${a} − ${b}`, a - b]; } },
-  // 小1 レベル2: 2けたの たしざん(こたえ 10〜99、くりあがり 7わり)
-  { id: 'g1L2a', grade: 1, emoji: '🦖', name: 'レベル2 たしざん', note: '2けた 38 + 27 など', gen() {
-      const carry = Math.random() < 0.7;
-      for (;;) {
-        const a = rnd(10, 98), b = Math.random() < 0.4 ? rnd(1, 9) : rnd(10, 89);
-        if (a + b > 99 || a + b < 10) continue;
-        if ((a % 10 + b % 10 >= 10) !== carry) continue;
-        return Math.random() < 0.3 && b < 10 ? [`${b} + ${a}`, a + b] : [`${a} + ${b}`, a + b];
-      } } },
-  // 小1 レベル2: 2けたの ひきざん(こたえ 2〜98、くりさがり 7わり)
-  { id: 'g1L2b', grade: 1, emoji: '🐲', name: 'レベル2 ひきざん', note: '2けた 52 − 19 など', gen() {
-      const borrow = Math.random() < 0.7;
-      for (;;) {
-        const a = rnd(11, 99), b = Math.random() < 0.4 ? rnd(1, 9) : rnd(10, 97);
-        const d = a - b;
-        if (d < 2 || d > 98) continue;
-        if ((a % 10 < b % 10) !== borrow) continue;
-        return [`${a} − ${b}`, d];
-      } } },
-  { id: 'c5', grade: 2, grades: [1, 2, 3, 4], emoji: '⭐', name: 'かけざん九九', note: '2〜9のだん', gen() { const a = rnd(2, 9), b = rnd(1, 9); return [`${a} × ${b}`, a * b]; } },
-  { id: 'c6', grade: 3, emoji: '🍰', name: 'わりざん', note: '九九を つかう', gen() { const b = rnd(2, 9), q = rnd(1, 9); return [`${b * q} ÷ ${b}`, q]; } },
-  { id: 'c7', grade: 3, emoji: '🧮', name: '3けたの たし算・ひき算', note: '352 + 478 など', gen() {
-      if (Math.random() < 0.5) { const a = rnd(100, 899), b = rnd(100, 999 - a); return [`${a} + ${b}`, a + b]; }
-      const a = rnd(200, 999), b = rnd(100, a - 1); return [`${a} − ${b}`, a - b]; } },
-  { id: 'c8', grade: 4, emoji: '🏔️', name: '2けた × 1けた', note: '47 × 6 など', gen() { const a = rnd(12, 99), b = rnd(2, 9); return [`${a} × ${b}`, a * b]; } },
-  { id: 'c9', grade: 4, emoji: '🐉', name: 'わり算の ひっ算', note: '3けた ÷ 1けた(わりきれる)', gen() {
-      const b = rnd(2, 9), q = rnd(Math.ceil(100 / b), Math.floor(999 / b)); return [`${b * q} ÷ ${b}`, q]; } },
-  { id: 'c10', grade: 4, emoji: '👑', name: 'ミックス', note: '4年の ぜんぶ', gen() { return pick([CALC_LEVELS[4], CALC_LEVELS[5], CALC_LEVELS[7], CALC_LEVELS[8]]).gen(); } },
-];
+/* ========== もんだい ========== */
+// けいさんの もんだい(CALC_LEVELS)は levels.js
 const PREF_LEVELS = [
   { id: 'q1', emoji: '🔤', name: 'よみかた', note: 'けんの なまえを よもう', minGrade: 1 },
   { id: 'q2', emoji: '🧭', name: 'どこの ちほう?', note: '8つの ちほう', minGrade: 1 },
@@ -264,14 +227,23 @@ RENDER['calc-menu'] = () => {
   const p = profile(current);
   const box = $('#calc-levels'); box.innerHTML = '';
   $$('#mode-seg button').forEach(b => b.classList.toggle('on', b.dataset.mode === calcMode));
-  // 基本は「その学年と、2学年下まで」の問題を表示(復習も含める)
-  const list = showAllCalc ? CALC_LEVELS : CALC_LEVELS.filter(l => l.grades ? l.grades.includes(p.grade) : (l.grade <= p.grade && l.grade >= p.grade - 2));
+  // 基本は「その学年 と 1つ下の学年(ふくしゅう)」。九九など grades がある ものは そこに出す
+  const shows = l => showAllCalc || (l.grades ? l.grades.includes(p.grade) : (l.grade === p.grade || l.grade === p.grade - 1));
   const ta = DB.ta[current] || {};
-  list.forEach(l => {
-    const b = levelButton(l, () => calcMode === 'ta' ? startTA(l) : startCalc(l));
-    if (calcMode === 'ta') b.insertAdjacentHTML('beforeend', `<span class="best">${ta[l.id] ? '🏆 ベスト ' + ta[l.id] + 'もん' : 'まだ きろく なし'}</span>`);
-    else b.insertAdjacentHTML('beforeend', `<span class="mini">${miniMonsters(l.id)}</span>`);
-    box.appendChild(b);
+  const grades = [...new Set(CALC_LEVELS.map(l => l.grade))].sort((x, y) => (y === p.grade) - (x === p.grade) || x - y);
+  grades.forEach(g => {
+    const list = CALC_LEVELS.filter(l => l.grade === g && shows(l));
+    if (!list.length) return;
+    const h = document.createElement('h3');
+    h.className = 'ghead';
+    h.textContent = `${g}ねんせい` + (g < p.grade ? '(ふくしゅう)' : g > p.grade ? '(さきどり)' : '');
+    box.appendChild(h);
+    list.forEach(l => {
+      const b = levelButton(l, () => calcMode === 'ta' ? startTA(l) : startCalc(l));
+      if (calcMode === 'ta') b.insertAdjacentHTML('beforeend', `<span class="best">${ta[l.id] ? '🏆 ベスト ' + ta[l.id] + 'もん' : 'まだ きろく なし'}</span>`);
+      else b.insertAdjacentHTML('beforeend', `<span class="mini">${miniMonsters(l.id)}</span>`);
+      box.appendChild(b);
+    });
   });
   $('#calc-all').textContent = showAllCalc ? 'じぶんの がくねんだけ みる' : 'ほかの がくねんの もんだいも みる';
 };
@@ -349,11 +321,13 @@ document.addEventListener('animationend', e => { if (e.target.classList && e.tar
 function defeat() {
   locked = true;
   updateHP();
+  const g = game; // とちゅうで べつの バトルが はじまったら なにもしない
+  const still = () => game === g && (screen === 'calc-play' || screen === 'pref-play');
   setTimeout(() => {
-    if (!game || (screen !== 'calc-play' && screen !== 'pref-play')) return;
+    if (!still()) return;
     $('#mon').classList.remove('hit');
     replay($('#mon'), 'down'); sound.down();
-    setTimeout(() => { if (screen === 'calc-play' || screen === 'pref-play') finish(); }, 950);
+    setTimeout(() => { if (still()) finish(); }, 950);
   }, 350);
 }
 function finish() {
@@ -387,14 +361,15 @@ $('#calc-quit').onclick = () => { sound.tap(); go('calc-menu'); };
 $('#pref-quit').onclick = () => { sound.tap(); go('pref-menu'); };
 
 /* ========== けいさん プレイ(バトル と タイムアタック) ========== */
-let typed = '', locked = false;
+let slots = [], active = 0, locked = false;
 function makeCalcItems(level, n) {
   const items = []; const seen = new Set();
   let guard = 0;
   while (items.length < n && guard++ < 500) {
-    const [q, a] = level.gen();
-    if (seen.has(q) && guard < 400) continue;
-    seen.add(q); items.push({ q, a });
+    const it = normItem(level.gen());
+    const key = it.p + it.q;
+    if (seen.has(key) && guard < 400) continue;
+    seen.add(key); items.push(it);
   }
   return items;
 }
@@ -402,24 +377,49 @@ function startCalc(level) {
   game = { kind: 'calc', level, items: makeCalcItems(level, SET_SIZE), i: 0, results: [], startAt: Date.now(), combo: 0, mon: pickMonster(level.id) };
   $('#calc-title').textContent = level.name;
   go('calc-play');
+  setupKeys(level);
   renderArena();
   showCalc();
 }
+// 小数点ボタンは 小数の レベルだけ
+function setupKeys(level) { $('#key-dot').style.visibility = level.dec ? 'visible' : 'hidden'; }
+// しきの {0} {1} を こたえらんに して かく
+function fillTemplate(q, vals, act) {
+  return q.replace(/\{(\d)\}/g, (_, k) => {
+    k = Number(k);
+    if (act === undefined) return `<span class="slot done">${vals[k]}</span>`;
+    return `<span class="slot${k === act ? ' on' : ''}">${vals[k] || ''}</span>`;
+  });
+}
+function renderQ() {
+  const it = game.items[game.i];
+  $('#calc-q').innerHTML = fillTemplate(it.q, slots, active);
+}
 function showCalc() {
   $('#calc-fb').classList.remove('show');
-  typed = ''; locked = false; game.miss = 0;
+  locked = false; game.miss = 0;
   if (game.kind === 'ta' && game.i >= game.items.length) game.items.push(...makeCalcItems(game.level, 20));
   const it = game.items[game.i];
-  $('#calc-q').textContent = it.q + ' =';
-  $('#calc-a').textContent = '';
-  $('#calc-correct').textContent = '';
+  slots = it.a.map(() => ''); active = 0;
+  $('#calc-p').innerHTML = it.p || '';
+  $('#calc-p').style.display = it.p ? '' : 'none';
+  $('#calc-img').innerHTML = it.img || '';
+  $('#calc-img').style.display = it.img ? '' : 'none';
+  // え や ぶんしょうが ある もんだいは かいじゅうを 小さくして ボタンが がめんに おさまるように
+  $('#calc-wrap').classList.toggle('compact', !!it.img);
+  $('#calc-wrap').classList.toggle('mid', !it.img && !!it.p);
+  // ながい しきは もじを すこし 小さく
+  const len = it.q.replace(/<[^>]+>/g, '').replace(/\{\d\}/g, '___').length;
+  $('#calc-q').className = 'question' + (len > 16 ? ' small' : '') + (len > 24 ? ' tiny' : '');
+  $('#calc-correct').innerHTML = '';
+  renderQ();
 }
 (function buildKeypad() {
   const box = $('#keypad');
-  ['7', '8', '9', '4', '5', '6', '1', '2', '3', '', '0', 'del'].forEach(k => {
+  ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', 'del'].forEach(k => {
     const b = document.createElement('button');
     if (k === 'del') { b.textContent = 'けす'; b.className = 'del'; }
-    else if (k === '') { b.style.visibility = 'hidden'; }
+    else if (k === '.') { b.textContent = '.'; b.id = 'key-dot'; b.className = 'dot'; }
     else b.textContent = k;
     // 指が ふれた しゅんかんに 反応(はなすのを またない)
     b.addEventListener('pointerdown', e => {
@@ -434,21 +434,32 @@ function showCalc() {
 })();
 function key(k) {
   if (screen !== 'calc-play' || locked) return;
-  if (k === 'del') { typed = typed.slice(0, -1); sound.tap(); }
-  else if (k && typed.length < 5) { typed = (typed === '0' ? '' : typed) + k; sound.tap(); }
-  $('#calc-a').textContent = typed;
-  // こたえと同じ けたすう まで うったら 自動で はんてい
-  if (typed.length >= String(game.items[game.i].a).length) answerCalc();
+  const want = game.items[game.i].a;
+  if (k === 'del') {
+    if (!slots[active] && active > 0) active--;
+    slots[active] = slots[active].slice(0, -1);
+    sound.tap(); renderQ(); return;
+  }
+  if (k === '.' && (!game.level.dec || slots[active].includes('.'))) return;
+  if (slots[active].length >= 6) return;
+  slots[active] = (slots[active] === '0' && k !== '.' ? '' : slots[active]) + k;
+  sound.tap();
+  // こたえと おなじ けたすう まで うったら つぎの らんへ、さいごの らんなら はんてい
+  if (slots[active].length >= want[active].length) {
+    if (active < want.length - 1) { active++; renderQ(); return; }
+    renderQ(); answerCalc(); return;
+  }
+  renderQ();
 }
 document.addEventListener('keydown', e => {
   if (screen !== 'calc-play') return;
-  if (/^[0-9]$/.test(e.key)) key(e.key);
+  if (/^[0-9.]$/.test(e.key)) key(e.key);
   else if (e.key === 'Backspace') key('del');
 });
 function answerCalc() {
   locked = true;
   const it = game.items[game.i];
-  const ok = Number(typed) === it.a;
+  const ok = it.a.every((x, k) => slots[k] === x);
   showFb('#calc-fb', ok);
   if (ok) {
     // 1かいめで せいかい なら ⭕、まちがえてから せいかい は ❌ のまま
@@ -469,11 +480,11 @@ function answerCalc() {
   game.results[game.i] = false;
   game.miss = (game.miss || 0) + 1;
   onWrong('#calc-wrap');
-  if (game.miss >= 3) $('#calc-correct').textContent = `ヒント: こたえは ${it.a}`;
+  if (game.miss >= 3) $('#calc-correct').innerHTML = 'ヒント: ' + fillTemplate(it.q, it.a);
   setTimeout(() => {
     if (screen !== 'calc-play') return;
-    typed = ''; locked = false;
-    $('#calc-a').textContent = '';
+    slots = it.a.map(() => ''); active = 0; locked = false;
+    renderQ();
   }, game.kind === 'ta' ? 200 : 300);
 }
 
@@ -483,6 +494,7 @@ function startTA(level) {
   game = { kind: 'ta', level, items: makeCalcItems(level, 30), i: 0, results: [], startAt: Date.now(), combo: 0, count: 0, left: TA_SEC };
   $('#calc-title').textContent = '⏱️ ' + level.name;
   go('calc-play');
+  setupKeys(level);
   renderArena();
   showCalc();
   clearInterval(taTimer);

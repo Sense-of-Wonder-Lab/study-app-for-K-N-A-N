@@ -103,6 +103,21 @@ h2{font-size:30px;margin:0;text-align:center}
 .feedback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:150px;pointer-events:none;opacity:0}
 .feedback.show{animation:pop .45s}
 @keyframes pop{0%{opacity:0;transform:scale(.4)}25%{opacity:1;transform:scale(1.1)}80%{opacity:1}100%{opacity:0;transform:scale(1)}}
+.qp{font-size:26px;font-weight:800;margin:2px 0 6px;line-height:1.4}
+#calc-img svg{width:190px;height:190px}
+.question.tiny{font-size:32px}
+.playwrap.compact .mon{height:110px} .playwrap.compact #calc-img svg{width:200px;height:200px}
+.playwrap.mid .mon{height:170px}
+.playwrap.compact .qcard,.playwrap.mid .qcard{padding:10px 16px}
+.slot{display:inline-block;min-width:1.5em;min-height:1.1em;padding:0 .12em;margin:0 .08em;border-bottom:5px dashed var(--line);color:var(--accent2);line-height:1.1;vertical-align:baseline;text-align:center}
+.slot.on{border-bottom:5px solid var(--accent2);background:color-mix(in srgb,var(--accent2) 14%,transparent);border-radius:8px 8px 0 0}
+.slot.done{border-bottom:none;min-width:0;color:var(--ng)}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-size:.78em;line-height:1.1;margin:0 .12em}
+.frac>span:first-child{border-bottom:4px solid currentColor;padding:0 .15em .05em;min-width:1.2em;text-align:center}
+.frac .slot{font-size:1em;min-width:1.2em}
+.keypad .dot{font-size:48px}
+.ghead{grid-column:1/-1;margin:6px 0 -6px;font-size:22px;color:var(--accent)}
+.correct-ans .question,.correct-ans{}
 .correct-ans{font-size:24px;color:var(--ng);min-height:32px;font-weight:700}
 .combo{font-size:22px;font-weight:900;color:var(--accent);min-height:30px}
 /* 結果 */
@@ -159,6 +174,15 @@ h2{font-size:30px;margin:0;text-align:center}
 .levels .mini svg{width:34px;height:34px}
 .toggle{text-align:center}
 .toggle button{background:none;color:var(--sub);font-size:17px;text-decoration:underline}
+/* たての 高さに あわせて 大きさを かえる(iPad mini や 古い iPad でも ボタンが はみ出さないように) */
+@media (orientation:portrait){
+  .mon{height:min(250px,19vh)}
+  .playwrap.mid .mon{height:min(170px,13vh)}
+  .playwrap.compact .mon{height:min(110px,7vh)}
+  .playwrap.compact #calc-img svg{width:min(200px,16vh);height:min(200px,16vh)}
+  .keypad button{padding:clamp(10px,1.7vh,22px) 0}
+  .question{font-size:min(60px,5.4vh)}
+}
 /* よこむき タブレット: 左に かいじゅう+もんだい、右に ボタン */
 @media (orientation:landscape) and (min-width:900px){
   .playwrap{display:grid;grid-template-columns:1.15fr 1fr;align-items:start}
@@ -237,8 +261,9 @@ h2{font-size:30px;margin:0;text-align:center}
       <div class="stage">
         <div class="arena" id="calc-arena"></div>
         <div class="qcard">
+          <div class="qp" id="calc-p"></div>
+          <div id="calc-img"></div>
           <div class="question" id="calc-q"></div>
-          <div class="answer" id="calc-a"></div>
           <div class="correct-ans" id="calc-correct"></div>
           <div class="feedback" id="calc-fb"></div>
         </div>
@@ -328,6 +353,7 @@ h2{font-size:30px;margin:0;text-align:center}
 
 <script src="data.js"></script>
 <script src="monsters.js"></script>
+<script src="levels.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
