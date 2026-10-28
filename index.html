@@ -183,6 +183,43 @@ h2{font-size:30px;margin:0;text-align:center}
   .keypad button{padding:clamp(10px,1.7vh,22px) 0}
   .question{font-size:min(60px,5.4vh)}
 }
+/* きせかえ */
+.pface{display:block;width:84px;height:94px} .pface svg{width:100%;height:100%}
+.home-chara{height:min(300px,26vh);display:flex;justify-content:center}
+.home-chara svg{height:100%;width:auto;border-radius:24px;animation:bob 2.6s ease-in-out infinite}
+.mon.gift svg{width:auto}
+.mon.open svg{animation:open .9s forwards}
+@keyframes open{0%{transform:scale(1)}30%{transform:scale(1.25) rotate(-8deg)}55%{transform:scale(.9) rotate(6deg)}100%{transform:scale(1.6);opacity:0}}
+.hp.gift i{background:linear-gradient(90deg,#ff9fc6,#ff5d8f)}
+.r-pair{display:flex;align-items:center;justify-content:center;gap:12px;height:100%}
+.r-pair .r-item{width:110px;height:110px;background:var(--bg);border-radius:20px;padding:6px}
+.r-pair .r-item svg{width:100%;height:100%}
+.r-pair .chara{height:100%;width:auto;border-radius:18px}
+#s-result .r-mon{height:min(320px,30vh)}
+.btn.wear{background:#ff5d8f}
+.mthumb{display:inline-flex;width:34px;height:34px;border-radius:8px;background:var(--bg);overflow:hidden;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:var(--sub)}
+.mthumb svg{width:100%;height:100%}
+.closet{display:flex;flex-direction:column;gap:14px}
+.cl-chara{background:var(--card);border-radius:28px;box-shadow:0 6px 0 var(--line);display:flex;justify-content:center;height:min(420px,36vh);padding:8px;overflow:hidden}
+.cl-chara svg{height:100%;width:auto;border-radius:20px}
+.cl-tabs{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.cl-tabs button{background:var(--card);border-radius:14px;padding:8px 2px;font-size:24px;box-shadow:0 3px 0 var(--line);display:flex;flex-direction:column;align-items:center;gap:2px}
+.cl-tabs button span{font-size:12px;font-weight:700;color:var(--sub)}
+.cl-tabs button.on{background:var(--accent)} .cl-tabs button.on span{color:#fff}
+.cl-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.cl-item{background:var(--card);border-radius:18px;padding:8px 6px;box-shadow:0 4px 0 var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;font-size:13px;font-weight:700;border:3px solid transparent}
+.cl-item svg{width:100%;height:96px}
+.cl-item.worn{border-color:var(--accent)}
+.cl-item .w{position:absolute;top:4px;left:6px;background:var(--accent);color:#fff;font-style:normal;font-size:12px;border-radius:8px;padding:1px 6px}
+.cl-item .k{position:absolute;top:4px;right:6px;font-style:normal}
+.cl-item.lock{opacity:.6;box-shadow:none;background:transparent;border:3px dashed var(--line)}
+.cl-item.lock .q{height:96px;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:900;color:var(--sub)}
+.cl-item.lock span{font-weight:400;color:var(--sub);text-align:center;font-size:12px}
+@media (orientation:landscape) and (min-width:900px){
+  .closet{display:grid;grid-template-columns:minmax(260px,.8fr) 1.4fr;align-items:start}
+  .cl-chara{height:calc(100vh - 130px);position:sticky;top:12px}
+  .cl-tabs{grid-template-columns:repeat(4,1fr)}
+}
 /* よこむき タブレット: 左に かいじゅう+もんだい、右に ボタン */
 @media (orientation:landscape) and (min-width:900px){
   .playwrap{display:grid;grid-template-columns:1.15fr 1fr;align-items:start}
@@ -221,10 +258,11 @@ h2{font-size:30px;margin:0;text-align:center}
       <div class="timebox"><div class="lbl"><span id="home-name"></span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
     </div>
     <h2 class="title" id="home-title"></h2>
+    <div class="home-chara" id="home-chara" data-go="closet"></div>
     <div class="grid">
       <button class="big" data-go="calc-menu"><span class="emoji">🔢</span>けいさん<span class="note">かいじゅうと バトル!</span></button>
       <button class="big" data-go="pref-menu"><span class="emoji">🗾</span>とどうふけん<span class="note">47 の けん を おぼえよう</span></button>
-      <button class="big" data-go="zukan"><span class="emoji">📖</span>かいじゅう ずかん<span class="note" id="home-zk"></span></button>
+      <button class="big" data-go="zukan" id="home-zk-btn"></button>
     </div>
   </section>
 
@@ -308,6 +346,7 @@ h2{font-size:30px;margin:0;text-align:center}
     <div class="btnrow">
       <button class="btn main" id="r-again">もういちど</button>
       <button class="btn" id="r-menu">ほかの もんだい</button>
+      <button class="btn wear" id="r-wear" style="display:none">👗 きてみる</button>
     </div>
   </section>
 
@@ -319,6 +358,21 @@ h2{font-size:30px;margin:0;text-align:center}
     </div>
     <div class="zk-count" id="zk-count"></div>
     <div id="zk-list" style="display:flex;flex-direction:column;gap:14px"></div>
+  </section>
+
+  <!-- きせかえ ルーム -->
+  <section class="screen" id="s-closet">
+    <div class="bar">
+      <button class="back" data-go="home">← もどる</button>
+      <div class="timebox"><div class="lbl"><span id="cl-count"></span><span>のこり <b class="remain"></b></span></div><div class="meter"><i></i></div></div>
+    </div>
+    <div class="closet">
+      <div class="cl-chara" id="cl-chara"></div>
+      <div class="cl-side">
+        <div class="cl-tabs" id="cl-tabs"></div>
+        <div class="cl-items" id="cl-items"></div>
+      </div>
+    </div>
   </section>
 
   <!-- おしまい -->
@@ -354,6 +408,7 @@ h2{font-size:30px;margin:0;text-align:center}
 <script src="data.js"></script>
 <script src="monsters.js"></script>
 <script src="levels.js"></script>
+<script src="dressup.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

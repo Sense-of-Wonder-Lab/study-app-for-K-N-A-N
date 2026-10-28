@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '3.0.0';
+const APP_VERSION = '4.0.0';
 const STORE_KEY = 'manabi_v1'; // 同じドメインの他ゲームと衝突しないよう接頭辞付き
 
 /* ========== テーマ(子どもごとの見た目) ========== */
@@ -24,12 +24,14 @@ function defaultData() {
   return {
     pin: null,
     profiles: [
-      { id: 'p1', name: '1ねんせい', grade: 1, limitMin: 30, avatar: 0, theme: 'sora', title: 'けいさん ロケット' },
-      { id: 'p2', name: '4ねんせい', grade: 4, limitMin: 30, avatar: 1, theme: 'sakura', title: 'マジカル けいさん' },
+      { id: 'p1', name: '1ねんせい', grade: 1, limitMin: 30, avatar: 0, theme: 'sora', title: 'けいさん ロケット', style: 'monster' },
+      { id: 'p2', name: '4ねんせい', grade: 4, limitMin: 30, avatar: 1, theme: 'sakura', title: 'マジカル けいさん', style: 'dressup' },
     ],
     usage: {},   // { profileId: { date, sec, bonusSec } }
     records: {}, // { profileId: { levelId: { best, time } } }
     zukan: {},   // { profileId: { monsterId: { n, kira, first } } }
+    closet: {},  // { profileId: { itemId: { n, kira, first } } }  きせかえ
+    outfit: {},  // { profileId: { hair, top, bottom, dress, shoes, acc, hand, bg } }
     ta: {},      // { profileId: { levelId: best } }
   };
 }
@@ -38,8 +40,8 @@ function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE_KEY)) || defaultData(); }
   catch (e) { DB = defaultData(); }
   // 古いバージョンのデータに足りない項目を補う
-  DB.zukan = DB.zukan || {}; DB.ta = DB.ta || {}; DB.records = DB.records || {}; DB.usage = DB.usage || {};
-  DB.profiles.forEach((p, i) => { if (!p.theme) p.theme = ['sora', 'sakura', 'mori', 'yume'][i % 4]; if (p.title === undefined) p.title = ''; });
+  DB.zukan = DB.zukan || {}; DB.ta = DB.ta || {}; DB.closet = DB.closet || {}; DB.outfit = DB.outfit || {}; DB.records = DB.records || {}; DB.usage = DB.usage || {};
+  DB.profiles.forEach((p, i) => { if (!p.theme) p.theme = ['sora', 'sakura', 'mori', 'yume'][i % 4]; if (p.title === undefined) p.title = ''; if (!p.style) p.style = p.id === 'p2' ? 'dressup' : 'monster'; });
 }
 function save() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) {}
@@ -63,11 +65,15 @@ function fmt(sec) {
 }
 function profile(id) { return DB.profiles.find(p => p.id === id); }
 function zukanOf(pid) { return DB.zukan[pid] = DB.zukan[pid] || {}; }
+function closetOf(pid) { return DB.closet[pid] = DB.closet[pid] || {}; }
+function outfitOf(pid) { return DB.outfit[pid] = DB.outfit[pid] || {}; }
+function isDress(pid) { const p = profile(pid || current); return !!p && p.style === 'dressup'; }
+function hasKira(pid) { const c = closetOf(pid), o = outfitOf(pid); return Object.values(o).some(id => id && c[id] && c[id].kira); }
 
 /* ========== 画面切り替え ========== */
 let current = null;      // 今あそんでいる子の id
 let screen = 'profiles';
-const COUNTED = new Set(['home', 'calc-menu', 'pref-menu', 'calc-play', 'pref-play', 'result', 'zukan']);
+const COUNTED = new Set(['home', 'calc-menu', 'pref-menu', 'calc-play', 'pref-play', 'result', 'zukan', 'closet']);
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 function go(name) {
@@ -194,7 +200,8 @@ RENDER.profiles = () => {
     const b = document.createElement('button');
     b.className = 'big' + (r <= 0 ? ' locked' : '');
     b.style.borderTop = `10px solid ${t.accent}`;
-    b.innerHTML = `<span class="emoji">${AVATARS[p.avatar % AVATARS.length]}</span>${esc(p.name)}<span class="note">${r <= 0 ? 'きょうは おしまい' : 'のこり ' + fmt(r)}</span>`;
+    const face = p.style === 'dressup' ? `<span class="pface">${charSVG(outfitOf(p.id), { viewBox: '62 0 176 196', noBg: true })}</span>` : `<span class="emoji">${AVATARS[p.avatar % AVATARS.length]}</span>`;
+    b.innerHTML = `${face}${esc(p.name)}<span class="note">${r <= 0 ? 'きょうは おしまい' : 'のこり ' + fmt(r)}</span>`;
     b.onclick = () => {
       sound.tap();
       current = p.id; warned = remainSec(p) <= 60;
@@ -209,10 +216,26 @@ RENDER.home = () => {
   applyTheme(p);
   $('#home-name').textContent = p.name;
   $('#home-title').textContent = p.title || 'まなびランド';
-  const n = Object.keys(zukanOf(current)).length;
-  $('#home-zk').textContent = `${n} / ${MONSTERS.length} たい あつめた`;
+  const btn = $('#home-zk-btn'), chara = $('#home-chara');
+  if (isDress()) {
+    const n = Object.keys(closetOf(current)).length;
+    btn.dataset.go = 'closet';
+    btn.innerHTML = `<span class="emoji">👗</span>きせかえ ルーム<span class="note">${n} / ${DU_ITEMS.length} こ あつめた</span>`;
+    chara.innerHTML = charSVG(outfitOf(current), { kira: hasKira(current) });
+    chara.style.display = '';
+  } else {
+    const n = Object.keys(zukanOf(current)).length;
+    btn.dataset.go = 'zukan';
+    btn.innerHTML = `<span class="emoji">📖</span>かいじゅう ずかん<span class="note">${n} / ${MONSTERS.length} たい あつめた</span>`;
+    chara.style.display = 'none';
+  }
+  $$('#s-home .big .note')[0].textContent = isDress() ? 'もんだいを といて プレゼントを ゲット!' : 'かいじゅうと バトル!';
 };
 function miniMonsters(levelId) {
+  if (isDress()) {
+    const c = closetOf(current);
+    return DU_ITEMS.filter(it => it.level === levelId).map(it => c[it.id] ? `<span class="mthumb">${itemSVG(it)}</span>` : '<span class="mthumb q">?</span>').join('');
+  }
   const z = zukanOf(current);
   return MONSTERS.filter(m => m.level === levelId).map(m => monsterSVG(m, { silhouette: !z[m.id], kira: z[m.id] && z[m.id].kira })).join('');
 }
@@ -230,7 +253,7 @@ RENDER['calc-menu'] = () => {
   // 基本は「その学年 と 1つ下の学年(ふくしゅう)」。九九など grades がある ものは そこに出す
   const shows = l => showAllCalc || (l.grades ? l.grades.includes(p.grade) : (l.grade === p.grade || l.grade === p.grade - 1));
   const ta = DB.ta[current] || {};
-  const grades = [...new Set(CALC_LEVELS.map(l => l.grade))].sort((x, y) => (y === p.grade) - (x === p.grade) || x - y);
+  const grades = [...new Set(CALC_LEVELS.map(l => l.grade))].sort((x, y) => (y === p.grade) - (x === p.grade) || (x > p.grade) - (y > p.grade) || y - x);
   grades.forEach(g => {
     const list = CALC_LEVELS.filter(l => l.grade === g && shows(l));
     if (!list.length) return;
@@ -263,9 +286,10 @@ RENDER['pref-menu'] = () => {
 let game = null;
 function stars(n) { return n >= SET_SIZE ? 3 : n >= SET_SIZE * 0.8 ? 2 : n >= SET_SIZE * 0.5 ? 1 : 0; }
 function pickMonster(levelId) {
-  const z = zukanOf(current);
-  const pool = MONSTERS.filter(m => m.level === levelId);
-  const normals = pool.filter(m => !m.boss), boss = pool.find(m => m.boss);
+  const dress = isDress();
+  const z = dress ? closetOf(current) : zukanOf(current);
+  const pool = dress ? DU_ITEMS.filter(x => x.level === levelId) : MONSTERS.filter(m => m.level === levelId);
+  const normals = pool.filter(m => !(m.boss || m.special)), boss = pool.find(m => m.boss || m.special);
   const notYet = normals.filter(m => !z[m.id]);
   if (notYet.length) return pick(notYet);          // まだ あっていない子から
   if (!z[boss.id]) return boss;                     // 3たい あつめたら ボス登場
@@ -281,12 +305,19 @@ function renderArena() {
     return;
   }
   const m = game.mon;
+  if (game.dress) {
+    a.innerHTML = `<div class="mon-head"><span class="mon-name">${m.special ? '<span class="boss">とくべつ</span>' : ''}🎁 プレゼント</span><div class="hp gift"><i id="hp"></i></div><span class="hpnum" id="hpnum"></span></div>
+      <div class="mon gift" id="mon">${giftSVG(DU_COLORS[m.special ? 'gold' : m.color === 'white' ? 'pink' : m.color][1])}</div><div class="dmg" id="dmg"></div>`;
+    updateHP();
+    return;
+  }
   a.innerHTML = `<div class="mon-head"><span class="mon-name">${m.boss ? '<span class="boss">ボス</span>' : ''}${esc(m.name)}</span><div class="hp"><i id="hp"></i></div><span class="hpnum" id="hpnum"></span></div>
     <div class="mon" id="mon">${monsterSVG(m)}</div><div class="dmg" id="dmg"></div>`;
   updateHP();
 }
 function updateHP() {
   const left = SET_SIZE - game.i;
+  if (game.dress) { $('#hp').style.width = (game.i / SET_SIZE * 100) + '%'; $('#hpnum').textContent = `♥ ${game.i}/${SET_SIZE}`; return; }
   $('#hp').style.width = (left / SET_SIZE * 100) + '%';
   $('#hpnum').textContent = `HP ${left}`;
 }
@@ -301,12 +332,12 @@ function onCorrect() {
   if (game.kind === 'ta') { popDmg(game.combo >= 3 ? `${game.combo}れんぞく!` : '⭕', '#2fae63'); return; }
   const mon = $('#mon');
   replay(mon, 'hit');
-  popDmg(game.combo >= 3 ? `${game.combo}れんぞく!` : pick(['ドカン!', 'バシッ!', 'ズバッ!', 'ポカッ!']));
+  popDmg(game.combo >= 3 ? `${game.combo}れんぞく!` : game.dress ? pick(['キラッ!', 'すてき!', 'いいね!', 'かわいい!']) : pick(['ドカン!', 'バシッ!', 'ズバッ!', 'ポカッ!']), game.dress ? '#ff5d8f' : '');
 }
 function onWrong(wrapSel) {
   game.combo = 0;
   sound.ng();
-  if (game.kind !== 'ta') { replay($('#mon'), 'attack'); setTimeout(sound.roar, 120); }
+  if (game.kind !== 'ta' && !game.dress) { replay($('#mon'), 'attack'); setTimeout(sound.roar, 120); }
   replay($(wrapSel), 'shake');
 }
 function showFb(sel, ok) {
@@ -326,7 +357,7 @@ function defeat() {
   setTimeout(() => {
     if (!still()) return;
     $('#mon').classList.remove('hit');
-    replay($('#mon'), 'down'); sound.down();
+    if (game.dress) { replay($('#mon'), 'open'); sound.fanfare(); } else { replay($('#mon'), 'down'); sound.down(); }
     setTimeout(() => { if (still()) finish(); }, 950);
   }, 350);
 }
@@ -337,6 +368,8 @@ function finish() {
   const prev = rec[game.level.id];
   const isBest = !prev || n > prev.best || (n === prev.best && time < prev.time);
   if (isBest) rec[game.level.id] = { best: n, time };
+  if (game.dress) { finishDress(n, time, isBest, prev); return; }
+  $('#r-wear').style.display = 'none';
   // ずかんに とうろく
   const z = zukanOf(current), m = game.mon, kira = n === SET_SIZE;
   const old = z[m.id];
@@ -354,6 +387,26 @@ function finish() {
   $('#r-detail').textContent = `${game.level.name}・${time} びょう` + (n < SET_SIZE ? '・ノーミスで キラキラに なるよ' : '');
   $('#r-best').textContent = isBest && prev ? '🎉 じこベスト こうしん!' : prev ? `じこベスト ${prev.best}もん・${prev.time}びょう` : '';
   sound.fanfare();
+}
+function finishDress(n, time, isBest, prev) {
+  const c = closetOf(current), it = game.mon, kira = n === SET_SIZE;
+  const old = c[it.id];
+  const isNew = !old, newKira = kira && !(old && old.kira);
+  c[it.id] = { n: (old ? old.n : 0) + 1, kira: !!(old && old.kira) || kira, first: old ? old.first : today() };
+  save();
+  go('result');
+  // あたらしい アイテムを きた すがたを みせる(まだ きがえては いない)
+  $('#r-mon').innerHTML = `<div class="r-pair"><div class="r-item">${itemSVG(it)}</div>${charSVG(wearPreview(outfitOf(current), it), { kira: kira })}</div>`;
+  replay($('#r-mon'), 'appear');
+  $('#r-get').textContent = `${it.name} を ゲット!`;
+  $('#r-badges').innerHTML = (isNew ? '<span class="badge">NEW!</span>' : '<span class="badge best">もう もってるよ</span>') +
+    (newKira ? '<span class="badge kira">✨ キラキラ ゲット!</span>' : kira ? '<span class="badge kira">✨ ノーミス!</span>' : '');
+  $('#r-stars').textContent = '⭐'.repeat(stars(n)) + '☆'.repeat(3 - stars(n));
+  $('#r-score').textContent = `1かいで せいかい ${n} / ${SET_SIZE}`;
+  $('#r-detail').textContent = `${game.level.name}・${time} びょう` + (n < SET_SIZE ? '・ノーミスで キラキラに なるよ' : '');
+  $('#r-best').textContent = isBest && prev ? '🎉 じこベスト こうしん!' : prev ? `じこベスト ${prev.best}もん・${prev.time}びょう` : '';
+  const w = $('#r-wear'); w.style.display = '';
+  w.onclick = () => { sound.tap(); wear(it); closetTab = it.cat; go('closet'); };
 }
 $('#r-again').onclick = () => { sound.tap(); game.kind === 'calc' ? startCalc(game.level) : game.kind === 'ta' ? startTA(game.level) : startPref(game.level); };
 $('#r-menu').onclick = () => { sound.tap(); go(game.kind === 'pref' ? 'pref-menu' : 'calc-menu'); };
@@ -374,7 +427,7 @@ function makeCalcItems(level, n) {
   return items;
 }
 function startCalc(level) {
-  game = { kind: 'calc', level, items: makeCalcItems(level, SET_SIZE), i: 0, results: [], startAt: Date.now(), combo: 0, mon: pickMonster(level.id) };
+  game = { kind: 'calc', level, items: makeCalcItems(level, SET_SIZE), i: 0, results: [], startAt: Date.now(), combo: 0, mon: pickMonster(level.id), dress: isDress() };
   $('#calc-title').textContent = level.name;
   go('calc-play');
   setupKeys(level);
@@ -543,7 +596,7 @@ function startPref(level) {
     pool = shuffle(diff.slice(0, 7).concat(same.slice(0, 3)));
   }
   const items = pool.slice(0, SET_SIZE).map(pr => makePrefQ(level.id, pr, yomi));
-  game = { kind: 'pref', level, items, i: 0, results: [], startAt: Date.now(), yomi, combo: 0, mon: pickMonster(level.id) };
+  game = { kind: 'pref', level, items, i: 0, results: [], startAt: Date.now(), yomi, combo: 0, mon: pickMonster(level.id), dress: isDress() };
   $('#pref-title').textContent = level.name;
   go('pref-play');
   renderArena();
@@ -642,6 +695,54 @@ function openMon(m) {
 }
 $('#zk-modal').onclick = e => { if (e.target.id === 'zk-modal') $('#zk-modal').classList.remove('on'); };
 
+/* ========== きせかえ ルーム ========== */
+let closetTab = 'hair';
+// きる: ワンピースを きたら トップス・ボトムスは かくれる。アクセ・もちもの・はいけいは もう一度 おすと はずす
+function wear(it) {
+  const o = outfitOf(current);
+  if (it.cat === 'dress') o.dress = o.dress === it.id ? null : it.id;
+  else if (it.cat === 'top' || it.cat === 'bottom') { o[it.cat] = it.id; o.dress = null; }
+  else if (['acc', 'hand', 'bg'].includes(it.cat)) o[it.cat] = o[it.cat] === it.id ? null : it.id;
+  else o[it.cat] = it.id;
+  save();
+}
+function wearPreview(o, it) {
+  const p = Object.assign({}, o);
+  if (it.cat === 'dress') p.dress = it.id;
+  else if (it.cat === 'top' || it.cat === 'bottom') { p[it.cat] = it.id; p.dress = null; }
+  else p[it.cat] = it.id;
+  return p;
+}
+function isWorn(o, it) {
+  const hidden = (it.cat === 'top' || it.cat === 'bottom') && !!o.dress; // ワンピースの したは みえない
+  if (it.starter) return !o[it.cat] && !hidden;
+  return o[it.cat] === it.id && !hidden;
+}
+RENDER.closet = () => {
+  const c = closetOf(current), o = outfitOf(current);
+  $('#cl-chara').innerHTML = charSVG(o, { kira: hasKira(current) });
+  $('#cl-count').textContent = `👗 ${Object.keys(c).length} / ${DU_ITEMS.length} こ あつめた`;
+  $('#cl-tabs').innerHTML = DU_CATS.map(t => `<button data-cat="${t.k}" class="${t.k === closetTab ? 'on' : ''}">${t.icon}<span>${t.name}</span></button>`).join('');
+  $$('#cl-tabs button').forEach(b => b.onclick = () => { sound.tap(); closetTab = b.dataset.cat; RENDER.closet(); });
+  const list = (DU_STARTER[closetTab] ? [DU_STARTER[closetTab]] : []).concat(DU_ITEMS.filter(x => x.cat === closetTab));
+  const owned = list.filter(it => it.starter || c[it.id]), locked = list.filter(it => !it.starter && !c[it.id]);
+  const box = $('#cl-items'); box.innerHTML = '';
+  owned.forEach(it => {
+    const b = document.createElement('button');
+    b.className = 'cl-item' + (isWorn(o, it) ? ' worn' : '');
+    b.innerHTML = `${itemSVG(it)}<span>${esc(it.name)}</span>${c[it.id] && c[it.id].kira ? '<i class="k">✨</i>' : ''}${isWorn(o, it) ? '<i class="w">きてる</i>' : ''}`;
+    b.onclick = () => { sound.tap(); if (it.starter) { o[it.cat] = null; if (it.cat !== 'hair' && it.cat !== 'shoes') o.dress = null; save(); } else wear(it); RENDER.closet(); };
+    box.appendChild(b);
+  });
+  locked.forEach(it => {
+    const lv = ALL_LEVELS.find(l => l.id === it.level);
+    const b = document.createElement('div');
+    b.className = 'cl-item lock';
+    b.innerHTML = `<div class="q">?</div><span>${lv ? lv.emoji + ' ' + esc(lv.name) : ''}${it.special ? '<br>(とくべつ)' : ''}</span>`;
+    box.appendChild(b);
+  });
+};
+
 /* ========== おしまい画面 ========== */
 RENDER.timeup = () => {
   const p = current && profile(current);
@@ -709,13 +810,15 @@ RENDER.parent = () => {
         <input type="text" class="f-name" value="${esc(p.name)}" maxlength="10">
         <select class="f-grade">${[1, 2, 3, 4, 5, 6].map(g => `<option value="${g}" ${g === p.grade ? 'selected' : ''}>小${g}</option>`).join('')}</select>
         <button class="sbtn f-avatar">アイコン変更</button></div>
+      <div class="row">あそびかた
+        <select class="f-style"><option value="monster" ${p.style !== 'dressup' ? 'selected' : ''}>かいじゅうバトル</option><option value="dressup" ${p.style === 'dressup' ? 'selected' : ''}>きせかえ</option></select></div>
       <div class="row">テーマ
         <select class="f-theme">${Object.entries(THEMES).map(([k, t]) => `<option value="${k}" ${k === p.theme ? 'selected' : ''}>${t.name}</option>`).join('')}</select>
         タイトル <input type="text" class="f-title" value="${esc(p.title || '')}" maxlength="14" placeholder="まなびランド" style="width:11em"></div>
       <div class="row">1日の上限
         <select class="f-limit">${limits.map(m => `<option value="${m}" ${m === p.limitMin ? 'selected' : ''}>${m}分</option>`).join('')}</select></div>
       <div class="row">今日の使用: <b>${Math.floor(u.sec / 60)}分${Math.floor(u.sec % 60)}秒</b> / 上限 ${Math.round(limitSec(p) / 60)}分${u.bonusSec ? `(延長 +${u.bonusSec / 60}分含む)` : ''}</div>
-      <div class="row" style="color:var(--sub);font-size:16px">ずかん ${zn} / ${MONSTERS.length} たい</div>
+      <div class="row" style="color:var(--sub);font-size:16px">ずかん ${zn} / ${MONSTERS.length} たい・きせかえ ${Object.keys(closetOf(p.id)).length} / ${DU_ITEMS.length} こ</div>
       <div class="row">
         <button class="sbtn primary f-ext">今日だけ +10分</button>
         <button class="sbtn f-reset">今日の使用時間を0に</button>
@@ -734,6 +837,7 @@ RENDER.parent = () => {
     const p = profile(el.dataset.pid);
     el.querySelector('.f-name').onchange = e => { p.name = e.target.value.trim() || p.name; save(); };
     el.querySelector('.f-grade').onchange = e => { p.grade = Number(e.target.value); save(); };
+    el.querySelector('.f-style').onchange = e => { p.style = e.target.value; save(); RENDER.parent(); };
     el.querySelector('.f-theme').onchange = e => { p.theme = e.target.value; save(); RENDER.parent(); };
     el.querySelector('.f-title').onchange = e => { p.title = e.target.value.trim(); save(); };
     el.querySelector('.f-limit').onchange = e => { p.limitMin = Number(e.target.value); save(); RENDER.parent(); };
@@ -744,13 +848,13 @@ RENDER.parent = () => {
     if (del) del.onclick = () => {
       if (!confirm(`${p.name}を削除しますか?記録とずかんも消えます。`)) return;
       DB.profiles = DB.profiles.filter(x => x !== p);
-      ['usage', 'records', 'zukan', 'ta'].forEach(k => delete DB[k][p.id]);
+      ['usage', 'records', 'zukan', 'ta', 'closet', 'outfit'].forEach(k => delete DB[k][p.id]);
       save(); RENDER.parent();
     };
   });
   $('#f-add').onclick = () => {
     const id = 'p' + Date.now().toString(36);
-    DB.profiles.push({ id, name: 'あたらしい子', grade: 1, limitMin: 30, avatar: DB.profiles.length % AVATARS.length, theme: 'mori', title: '' });
+    DB.profiles.push({ id, name: 'あたらしい子', grade: 1, limitMin: 30, avatar: DB.profiles.length % AVATARS.length, theme: 'mori', title: '', style: 'monster' });
     save(); RENDER.parent();
   };
   $('#f-pin').onclick = () => { pinBuf = ''; pinFirst = ''; pinMode = 'set1'; go('pin'); };
