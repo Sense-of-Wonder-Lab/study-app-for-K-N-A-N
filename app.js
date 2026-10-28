@@ -253,7 +253,8 @@ RENDER['calc-menu'] = () => {
   // 基本は「その学年 と 1つ下の学年(ふくしゅう)」。九九など grades がある ものは そこに出す
   const shows = l => showAllCalc || (l.grades ? l.grades.includes(p.grade) : (l.grade === p.grade || l.grade === p.grade - 1));
   const ta = DB.ta[current] || {};
-  const grades = [...new Set(CALC_LEVELS.map(l => l.grade))].sort((x, y) => (y === p.grade) - (x === p.grade) || (x > p.grade) - (y > p.grade) || y - x);
+  const grades = [...new Set(CALC_LEVELS.map(l => l.grade))].sort((x, y) => gkey(x) - gkey(y));
+  function gkey(g) { return g === p.grade ? 0 : g < p.grade ? p.grade - g : 10 + g - p.grade; } // じぶん → ふくしゅう(ちかい順) → さきどり
   grades.forEach(g => {
     const list = CALC_LEVELS.filter(l => l.grade === g && shows(l));
     if (!list.length) return;
