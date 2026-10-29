@@ -33,11 +33,11 @@ const kuku = dans => () => { const a = pick(dans), b = rnd(1, 9); return [`${a} 
 
 const CALC_LEVELS = [
   /* ---------- 1年 ---------- */
-  { id: 'g1L1a', grade: 1, emoji: '🚀', name: 'レベル1 くりあがり', note: '9 + 5 など(こたえ 10〜18)', gen() {
+  { id: 'g1L1a', grade: 1, grades: [1, 4], emoji: '🚀', name: 'レベル1 くりあがり', note: '9 + 5 など(こたえ 10〜18)', gen() {
       const a = rnd(1, 9), b = rnd(10 - a, 9); return [`${a} + ${b}`, a + b]; } },
-  { id: 'g1L1b', grade: 1, emoji: '🌈', name: 'レベル1 くりさがり', note: '13 − 6 など(こたえ 2〜9)', gen() {
+  { id: 'g1L1b', grade: 1, grades: [1, 4], emoji: '🌈', name: 'レベル1 くりさがり', note: '13 − 6 など(こたえ 2〜9)', gen() {
       const a = rnd(10, 18), b = rnd(Math.max(a % 10 + 1, a - 9), Math.min(9, a - 2)); return [`${a} − ${b}`, a - b]; } },
-  { id: 'g1L2a', grade: 1, emoji: '🦖', name: 'レベル2 たしざん', note: '2けた 38 + 27 など', gen() {
+  { id: 'g1L2a', grade: 1, grades: [1, 4], emoji: '🦖', name: 'レベル2 たしざん', note: '2けた 38 + 27 など', gen() {
       const carry = Math.random() < 0.7;
       for (;;) {
         const a = rnd(10, 98), b = Math.random() < 0.4 ? rnd(1, 9) : rnd(10, 89);
@@ -45,7 +45,7 @@ const CALC_LEVELS = [
         if ((a % 10 + b % 10 >= 10) !== carry) continue;
         return Math.random() < 0.3 && b < 10 ? [`${b} + ${a}`, a + b] : [`${a} + ${b}`, a + b];
       } } },
-  { id: 'g1L2b', grade: 1, emoji: '🐲', name: 'レベル2 ひきざん', note: '2けた 52 − 19 など', gen() {
+  { id: 'g1L2b', grade: 1, grades: [1, 4], emoji: '🐲', name: 'レベル2 ひきざん', note: '2けた 52 − 19 など', gen() {
       const borrow = Math.random() < 0.7;
       for (;;) {
         const a = rnd(11, 99), b = Math.random() < 0.4 ? rnd(1, 9) : rnd(10, 97);
@@ -128,33 +128,28 @@ const CALC_LEVELS = [
   { id: 'g3d', grade: 3, emoji: '🍪', name: 'あまりの ある わりざん', note: '23 ÷ 4 = 5 あまり 3', gen() {
       const b = rnd(2, 9), q = rnd(1, 9), r = rnd(1, b - 1);
       return Q('', `${b * q + r} ÷ ${b} = {0} あまり {1}`, [q, r]); } },
-  { id: 'g3e', grade: 3, emoji: '💧', name: 'しょうすうの たし算・ひき算', note: '2.3 + 1.5 など', dec: true, gen() {
+  { id: 'g3e', grade: 3, emoji: '💧', name: 'しょうすうの たし算・ひき算', note: '0.7 + 1.2 など', dec: true, gen() {
       for (;;) {
-        const x = Math.random() < 0.2 ? rnd(1, 9) * 10 : rnd(1, 99), y = rnd(1, 99);
-        if (x % 10 === 0 && y % 10 === 0) continue;
+        const x = rnd(1, 49), y = rnd(1, 49);
         if (Math.random() < 0.5) return [`${dec1(x)} + ${dec1(y)}`, dec1(x + y)];
         if (x > y) return [`${dec1(x)} − ${dec1(y)}`, dec1(x - y)];
       } } },
-  { id: 'g3f', grade: 3, emoji: '🧁', name: 'ぶんすうの たし算・ひき算', note: '分母が おなじ', gen() {
-      const d = rnd(3, 10), t = rnd(0, 2);
-      if (t === 0) { const a = rnd(1, d - 2), b = rnd(1, d - 1 - a); return Q('', `${frac(a, d)} + ${frac(b, d)} = ${frac('{0}', d)}`, [a + b]); }
-      if (t === 1) { const a = rnd(2, d - 1), b = rnd(1, a - 1); return Q('', `${frac(a, d)} − ${frac(b, d)} = ${frac('{0}', d)}`, [a - b]); }
-      const a = rnd(1, d - 1); return Q('', `1 − ${frac(a, d)} = ${frac('{0}', d)}`, [d - a]); } },
-  { id: 'g3g', grade: 3, emoji: '⚖️', name: 'たんい(km・kg・秒)', note: '2kg300g = □g など', gen() {
-      const t = rnd(0, 6);
-      if (t === 0) { const x = rnd(1, 9), y = rnd(1, 999); return Q('', `${x}km${y}m = {0} m`, [x * 1000 + y]); }
-      if (t === 1) { const x = rnd(1, 9), y = rnd(1, 999); return Q('', `${x * 1000 + y} m = {0} km {1} m`, [x, y]); }
-      if (t === 2) { const x = rnd(1, 9), y = rnd(1, 999); return Q('', `${x}kg${y}g = {0} g`, [x * 1000 + y]); }
-      if (t === 3) { const x = rnd(1, 9), y = rnd(1, 999); return Q('', `${x * 1000 + y} g = {0} kg {1} g`, [x, y]); }
-      if (t === 4) { const x = rnd(1, 9); return Q('', `${x} t = {0} kg`, [x * 1000]); }
-      if (t === 5) { const x = rnd(1, 4), y = rnd(1, 59); return Q('', `${x}分${y}秒 = {0} 秒`, [x * 60 + y]); }
-      const x = rnd(1, 4), y = rnd(1, 59); return Q('', `${x * 60 + y} 秒 = {0} 分 {1} 秒`, [x, y]); } },
+  { id: 'g3f', grade: 3, emoji: '🧁', name: 'ぶんすうの やくぶん', note: '6/8 を いちばん かんたんな 分数に', gen() {
+      const pairs = [[2,4,1,2],[3,6,1,2],[4,8,1,2],[6,8,3,4],[6,9,2,3],[8,12,2,3],[4,6,2,3],[6,10,3,5],[9,12,3,4],[10,12,5,6]];
+      const [n,d,sn,sd] = pick(pairs);
+      return Q('やくぶんしよう', `${frac(n,d)} = ${frac('{0}','{1}')}`, [sn,sd]); } },
+  { id: 'g3g', grade: 3, emoji: '⚖️', name: 'たんい', note: 'cm・mm、L・dL', gen() {
+      const t = rnd(0, 3);
+      if (t === 0) { const x = rnd(1, 8), y = rnd(0, 9); return Q('', `${x}cm${y}mm = {0} mm`, [x * 10 + y]); }
+      if (t === 1) { const x = rnd(1, 8), y = rnd(0, 9); return Q('', `${x * 10 + y} mm = {0} cm {1} mm`, [x, y]); }
+      if (t === 2) { const x = rnd(1, 8), y = rnd(0, 9); return Q('', `${x}L${y}dL = {0} dL`, [x * 10 + y]); }
+      const x = rnd(1, 8), y = rnd(0, 9); return Q('', `${x * 10 + y} dL = {0} L {1} dL`, [x, y]); } },
   { id: 'g3h', grade: 3, emoji: '📦', name: '□を つかった しき', note: '□ + 25 = 60 など', gen() {
       const t = rnd(0, 5);
-      if (t === 0) { const x = rnd(10, 79), b = rnd(10, 99 - x); return Q('', `{0} + ${b} = ${x + b}`, [x]); }
-      if (t === 1) { const a = rnd(10, 79), x = rnd(10, 99 - a); return Q('', `${a} + {0} = ${a + x}`, [x]); }
-      if (t === 2) { const x = rnd(30, 99), b = rnd(10, x - 5); return Q('', `{0} − ${b} = ${x - b}`, [x]); }
-      if (t === 3) { const a = rnd(30, 99), x = rnd(5, a - 5); return Q('', `${a} − {0} = ${a - x}`, [x]); }
+      if (t === 0) { const x = rnd(1, 49), b = rnd(1, 50); return Q('', `{0} + ${b} = ${x + b}`, [x]); }
+      if (t === 1) { const a = rnd(1, 49), x = rnd(1, 50); return Q('', `${a} + {0} = ${a + x}`, [x]); }
+      if (t === 2) { const x = rnd(20, 99), b = rnd(1, Math.min(49, x - 1)); return Q('', `{0} − ${b} = ${x - b}`, [x]); }
+      if (t === 3) { const a = rnd(20, 99), x = rnd(1, Math.min(49, a - 1)); return Q('', `${a} − {0} = ${a - x}`, [x]); }
       if (t === 4) { const x = rnd(2, 9), b = rnd(2, 9); return Q('', `{0} × ${b} = ${x * b}`, [x]); }
       const x = rnd(2, 9), c = rnd(2, 9); return Q('', `{0} ÷ ${x} = ${c}`, [x * c]); } },
   { id: 'g3i', grade: 3, emoji: '🌌', name: '大きな かず', note: '1万が3こ と 千が5こ…', gen() {
@@ -182,17 +177,25 @@ const CALC_LEVELS = [
         return Math.random() < 0.5 ? [`${dec1(x)} × ${b}`, dec1(x * b)] : [`${dec1(x * b)} ÷ ${b}`, dec1(x)];
       } } },
   { id: 'g4d', grade: 4, emoji: '🥧', name: '仮分数と帯分数', note: '11/4 = 2と3/4', gen() {
-      const d = rnd(2, 9), w = rnd(1, 4), r = rnd(1, d - 1), n = w * d + r;
+      const d = rnd(2, 8), w = rnd(1, 3), r = rnd(1, d - 1), n = w * d + r;
       return Math.random() < 0.5 ? Q('帯分数に なおそう', `${frac(n, d)} = {0}${frac('{1}', d)}`, [w, r])
         : Q('仮分数に なおそう', `${w}${frac(r, d)} = ${frac('{0}', d)}`, [n]); } },
   { id: 'g4e', grade: 4, emoji: '🟩', name: '面積', note: '長方形・正方形', gen() {
       const t = rnd(0, 2);
-      if (t === 0) { const a = rnd(2, 15), b = rnd(2, 15); return Q(`たて ${a}cm、よこ ${b}cm の 長方形の 面積は?`, '{0} cm²', [a * b]); }
-      if (t === 1) { const a = rnd(2, 15); return Q(`1辺が ${a}cm の 正方形の 面積は?`, '{0} cm²', [a * a]); }
-      const a = rnd(2, 12), b = rnd(2, 12); return Q(`面積 ${a * b}cm²、たて ${a}cm の 長方形。よこは?`, '{0} cm', [b]); } },
+      if (t === 0) { const a = rnd(2, 9), b = rnd(2, 9); return Q(`たて ${a}cm、よこ ${b}cm の 長方形の 面積は?`, '{0} cm²', [a * b]); }
+      if (t === 1) { const a = rnd(2, 9); return Q(`1辺が ${a}cm の 正方形の 面積は?`, '{0} cm²', [a * a]); }
+      const a = rnd(2, 9), b = rnd(2, 9); return Q(`面積 ${a * b}cm²、たて ${a}cm の 長方形。よこは?`, '{0} cm', [b]); } },
   { id: 'c10', grade: 4, emoji: '👑', name: '4年 ミックス', note: '4年の けいさん ぜんぶ', dec: true, gen() {
       return pick(CALC_LEVELS.filter(l => l.grade === 4 && l.id !== 'c10' && l.id !== 'g4d')).gen(); } },
 ];
+
+const ALL_CALC_LEVELS = CALC_LEVELS.slice();
+const ACTIVE_CALC_LEVEL_IDS = new Set([
+  'g1L1a', 'g1L1b', 'g1L2a', 'g1L2b',
+  'c6', 'g3d', 'g3e', 'g3f', 'g3g', 'g3h',
+  'g4d', 'g4e',
+]);
+CALC_LEVELS.splice(0, CALC_LEVELS.length, ...CALC_LEVELS.filter(l => ACTIVE_CALC_LEVEL_IDS.has(l.id)));
 
 // gen() の かえりを ひとつの かたちに そろえる
 function normItem(r) {

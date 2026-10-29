@@ -29,11 +29,37 @@ const DU_SHAPES = {
   hand: { wand: 'まほうの ステッキ', bag: 'ポシェット', balloon: 'ふうせん', bouquet: 'ブーケ', parasol: 'パラソル' },
   bg: { sky: 'あおぞら', night: 'ほしぞら', hearts: 'ハート', dots: 'みずたま', castle: 'おしろ', flowers: 'おはなばたけ' },
 };
-// アイテムを つくる: レベルごとに 4こ(4こめは とくべつ)
-const DU_LEVELS = (typeof CALC_LEVELS !== 'undefined' ? CALC_LEVELS.map(l => l.id) : []).concat(['q1', 'q2', 'q3', 'q4']);
-const DU_NORMAL_CATS = ['top', 'bottom', 'acc', 'hair', 'shoes', 'hand', 'bg', 'top', 'dress', 'acc', 'bottom', 'hand'];
-const DU_SPECIAL = [['dress', 'princess'], ['acc', 'tiara'], ['hand', 'wand'], ['bg', 'castle'], ['acc', 'crown'], ['dress', 'frill']];
+// 問題ごとの報酬アイテム。各レベル3こ＋特別アイテム1こ。
+// 未使用のデザインは DU_RESERVE_DESIGNS に残し、今後の問題追加で使う。
+const DU_LEVEL_MAP = {
+  g1L1a: [['hair','bob','pinkh'],['top','puff','sakura'],['shoes','sneaker','mint'],['acc','ribbon','gold']],
+  g1L1b: [['hair','twin','blond'],['bottom','pleats','sky'],['top','sailor','navy'],['acc','flower','pink']],
+  g1L2a: [['hair','pony','aqua'],['top','knit','lavender'],['bottom','shorts','lemon'],['hand','bag','purple']],
+  g1L2b: [['hair','bun','silver'],['top','hoodie','mint'],['bottom','pants','red'],['bg','night','navy']],
+  c6:    [['top','tee','red'],['bottom','skirt','pink'],['shoes','strap','lavender'],['acc','crown','gold']],
+  g3d:   [['top','puff','orange'],['bottom','shorts','sky'],['hand','balloon','lemon'],['acc','cat','purple']],
+  g3e:   [['hair','wave','silver'],['top','cami','lavender'],['shoes','ribbon','sakura'],['hand','parasol','pink']],
+  g3f:   [['dress','aline','mint'],['top','sailor','red'],['bottom','pleats','sakura'],['dress','frill','purple']],
+  g3g:   [['top','sailor','orange'],['bottom','pants','sky'],['shoes','sneaker','red'],['bg','sky','sky']],
+  g3h:   [['hair','bun','brown'],['top','hoodie','orange'],['bottom','pants','purple'],['hand','wand','gold']],
+  g4d:   [['dress','jumper','sakura'],['acc','tiara','lavender'],['shoes','boots','navy'],['dress','princess','pink']],
+  g4e:   [['top','knit','mint'],['bottom','frill','pink'],['hand','bouquet','red'],['bg','flowers','sakura']],
+  q1:    [['hair','bob','brown'],['top','puff','sky'],['shoes','boots','purple'],['acc','heart','gold']],
+  q2:    [['hair','twin','red'],['top','tee','lemon'],['bottom','skirt','red'],['hand','bouquet','lemon']],
+  q3:    [['hair','long','silver'],['top','cami','mint'],['shoes','sneaker','navy'],['acc','tiara','gold']],
+  q4:    [['hair','wave','pinkh'],['top','knit','red'],['bottom','pleats','lemon'],['bg','hearts','sakura']],
+};
+const DU_LEVELS = Object.keys(DU_LEVEL_MAP);
 const DU_ITEMS = [];
+const DU_RESERVE_DESIGNS = [
+  ['hair','long','violet'], ['hair','pony','red'], ['hair','twin','pinkh'],
+  ['top','cami','orange'], ['top','knit','sky'], ['top','hoodie','lavender'],
+  ['bottom','frill','navy'], ['bottom','pants','mint'], ['bottom','pleats','gold'],
+  ['dress','jumper','lavender'], ['dress','aline','red'], ['dress','frill','sky'],
+  ['shoes','boots','red'], ['shoes','sneaker','lemon'], ['acc','beret','orange'],
+  ['acc','heart','sakura'], ['hand','bag','mint'], ['hand','parasol','lavender'],
+  ['bg','dots','sky'], ['bg','castle','lavender'], ['bg','flowers','pink'],
+];
 const DU_STARTER = {
   hair: { id: 's_hair', cat: 'hair', shape: 'long', color: 'brown', name: 'ちゃいろの ロングヘア', starter: true },
   top: { id: 's_top', cat: 'top', shape: 'tee', color: 'white', name: 'しろの Tシャツ', starter: true },
@@ -41,26 +67,19 @@ const DU_STARTER = {
   shoes: { id: 's_shoes', cat: 'shoes', shape: 'strap', color: 'pink', name: 'ピンクの ストラップシューズ', starter: true },
 };
 (function makeItems() {
-  const r = seeded(hashStr('kisekae-v1'));
-  const used = new Set(Object.values(DU_STARTER).map(s => s.cat + s.shape + s.color));
-  let n = 0;
-  DU_LEVELS.forEach((lv, li) => {
-    for (let i = 0; i < 4; i++) {
-      let cat, shape, color;
-      if (i === 3) {
-        [cat, shape] = DU_SPECIAL[li % DU_SPECIAL.length];
-        const cs = Object.keys(cat === 'hair' ? DU_HAIR : DU_COLORS);
-        do { color = cs[Math.floor(r() * cs.length)]; } while (used.has(cat + shape + color));
-      } else {
-        cat = DU_NORMAL_CATS[n++ % DU_NORMAL_CATS.length];
-        const shapes = Object.keys(DU_SHAPES[cat]).filter(s => !(cat === 'acc' && s === 'crown') && !(cat === 'dress' && s === 'princess') && !(cat === 'bg' && s === 'castle'));
-        const cs = Object.keys(cat === 'hair' ? DU_HAIR : DU_COLORS);
-        do { shape = shapes[Math.floor(r() * shapes.length)]; color = cs[Math.floor(r() * cs.length)]; } while (used.has(cat + shape + color));
-      }
-      used.add(cat + shape + color);
-      const cname = (cat === 'hair' ? DU_HAIR : DU_COLORS)[color][0];
-      DU_ITEMS.push({ id: lv + '_d' + i, level: lv, cat, shape, color, special: i === 3, name: `${cname}の ${DU_SHAPES[cat][shape]}` });
-    }
+  const assigned = new Set(Object.values(DU_STARTER).map(s => s.cat + s.shape + s.color));
+  Object.entries(DU_LEVEL_MAP).forEach(([level, designs]) => {
+    designs.forEach(([cat, shape, color], i) => {
+      const palette = cat === 'hair' ? DU_HAIR : DU_COLORS;
+      const key = cat + shape + color;
+      if (!DU_SHAPES[cat] || !DU_SHAPES[cat][shape] || !palette[color]) throw new Error('Invalid dress-up design: ' + key);
+      if (assigned.has(key)) throw new Error('Duplicate dress-up design: ' + key);
+      assigned.add(key);
+      DU_ITEMS.push({
+        id: level + '_d' + i, level, cat, shape, color,
+        special: i === 3, name: `${palette[color][0]}の ${DU_SHAPES[cat][shape]}`,
+      });
+    });
   });
 })();
 function duItem(id) { return DU_ITEMS.find(x => x.id === id) || Object.values(DU_STARTER).find(x => x.id === id); }
