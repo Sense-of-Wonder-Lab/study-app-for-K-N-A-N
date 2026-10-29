@@ -48,6 +48,12 @@ const MONSTERS = [];
 Object.entries(MONSTER_SETS).forEach(([level, set]) => {
   set.names.forEach((name, i) => MONSTERS.push({ id: level + '_' + i, level, name, hue: set.hue, boss: i === 3 }));
 });
+const ACTIVE_MONSTER_LEVEL_IDS = new Set([
+  'g1L1a', 'g1L1b', 'g1L2a', 'g1L2b',
+  'c6', 'g3d', 'g3e', 'g3f', 'g3g', 'g3h',
+  'g4d', 'g4e', 'q1', 'q2', 'q3', 'q4',
+]);
+MONSTERS.splice(0, MONSTERS.length, ...MONSTERS.filter(m => ACTIVE_MONSTER_LEVEL_IDS.has(m.level)));
 
 function hashStr(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function seeded(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
