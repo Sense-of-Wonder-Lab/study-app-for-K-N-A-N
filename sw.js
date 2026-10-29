@@ -1,5 +1,5 @@
 // 更新するときは VERSION を必ず上げる(上げないと古いままになる)
-const VERSION = 'manabi-4.0.0';
+const VERSION = 'manabi-4.0.1';
 const FILES = ['./', './index.html', './app.js', './data.js', './monsters.js', './levels.js', './dressup.js', './manifest.json',
   './icon-180.png', './icon-192.png', './icon-512.png'];
 

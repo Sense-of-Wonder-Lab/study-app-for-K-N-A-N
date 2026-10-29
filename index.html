@@ -238,6 +238,227 @@ h2{font-size:30px;margin:0;text-align:center}
   h1{font-size:32px}
   .zk-row{grid-template-columns:repeat(2,1fr)}
 }
+
+/* =========================================
+   まなびランド：ファッション着せ替えUI
+   見た目のみ変更。既存の機能・データは変更しない
+   ========================================= */
+
+.closet {
+  gap: 16px;
+}
+
+/* キャラクターのステージ */
+.cl-chara {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 50% 32%,
+      rgba(255,255,255,.98) 0%,
+      rgba(255,245,250,.96) 42%,
+      rgba(237,226,255,.92) 100%);
+  border: 1px solid rgba(255,255,255,.95);
+  border-radius: 30px;
+  box-shadow:
+    0 8px 24px rgba(132,91,151,.10),
+    inset 0 0 0 5px rgba(255,255,255,.45);
+  padding: 12px;
+  overflow: hidden;
+}
+
+.cl-chara::before {
+  content: "✦";
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  color: #e7b5db;
+  font-size: 23px;
+  pointer-events: none;
+}
+
+.cl-chara::after {
+  content: "✧";
+  position: absolute;
+  right: 20px;
+  top: 48px;
+  color: #c6b1f5;
+  font-size: 30px;
+  pointer-events: none;
+}
+
+.cl-chara svg {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  filter: drop-shadow(0 5px 5px rgba(100,70,110,.08));
+}
+
+/* カテゴリー選択 */
+.cl-tabs {
+  gap: 8px;
+}
+
+.cl-tabs button {
+  min-width: 0;
+  background: linear-gradient(160deg, #fff 0%, #fff8fc 100%);
+  border: 1px solid #f0dfed;
+  border-radius: 17px;
+  padding: 10px 3px;
+  box-shadow: 0 3px 0 #ead9e8;
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease,
+    background .15s ease;
+}
+
+.cl-tabs button:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #ead9e8;
+}
+
+.cl-tabs button span {
+  color: #8e7893;
+  font-size: 11px;
+}
+
+.cl-tabs button.on {
+  background: linear-gradient(145deg, #f6c5e2 0%, #d9c8ff 100%);
+  border-color: #e7b6df;
+  box-shadow:
+    0 3px 0 #d6b2d7,
+    0 5px 14px rgba(190,133,190,.16);
+}
+
+.cl-tabs button.on span {
+  color: #593c68;
+}
+
+/* 服・アイテム一覧 */
+.cl-items {
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 12px;
+}
+
+.cl-item {
+  background: linear-gradient(160deg, #fff 0%, #fffafd 100%);
+  border: 2px solid #f1e5f0;
+  border-radius: 20px;
+  padding: 10px 8px;
+  box-shadow: 0 4px 0 #eadfea;
+  gap: 6px;
+  color: #5f4a63;
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease,
+    border-color .15s ease;
+}
+
+.cl-item:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #eadfea;
+}
+
+.cl-item svg {
+  height: 100px;
+}
+
+/* 着用中のアイテム */
+.cl-item.worn {
+  border-color: #d79cda;
+  background: linear-gradient(160deg, #fff8ff 0%, #f5eaff 100%);
+  box-shadow:
+    0 4px 0 #d8b8df,
+    0 0 0 2px rgba(226,183,232,.18);
+}
+
+.cl-item .w {
+  top: 6px;
+  left: 6px;
+  background: linear-gradient(135deg, #d98dc8, #ae91e9);
+  color: #fff;
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 10px;
+  box-shadow: 0 2px 5px rgba(130,80,140,.16);
+}
+
+.cl-item .k {
+  top: 5px;
+  right: 6px;
+}
+
+/* 未解放アイテム */
+.cl-item.lock {
+  background: #f8f5f9;
+  border: 2px dashed #ded2e3;
+  box-shadow: none;
+}
+
+.cl-item.lock .q {
+  color: #b5a3be;
+}
+
+.cl-item.lock span {
+  color: #98879f;
+}
+
+/* タブレット・スマートフォン */
+@media (max-width: 600px) {
+  .closet {
+    gap: 12px;
+  }
+
+  .cl-chara {
+    height: min(390px, 42vh);
+    min-height: 220px;
+    border-radius: 24px;
+  }
+
+  .cl-tabs {
+    gap: 5px;
+  }
+
+  .cl-tabs button {
+    border-radius: 13px;
+    padding: 8px 1px;
+    font-size: 21px;
+  }
+
+  .cl-tabs button span {
+    font-size: 10px;
+  }
+
+  .cl-items {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .cl-item {
+    border-radius: 16px;
+    padding: 8px 5px;
+    font-size: 12px;
+  }
+
+  .cl-item svg {
+    height: 84px;
+  }
+}
+
+/* 横向きの小型画面 */
+@media (orientation: landscape) and (max-height: 600px) {
+  .cl-chara {
+    height: min(72vh, 420px);
+  }
+}
+
+/* 動きを減らす設定を尊重 */
+@media (prefers-reduced-motion: reduce) {
+  .cl-tabs button,
+  .cl-item {
+    transition: none;
+  }
+}
+
 </style>
 </head>
 <body>
