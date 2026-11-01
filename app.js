@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '5.0.0';
+const APP_VERSION = '5.1.0';
 const STORE_KEY = 'manabi_v2'; // 5.0.0: 着せ替え・出題構成の刷新に伴い新しい保存領域を使う
 
 /* ========== テーマ(子どもごとの見た目) ========== */
@@ -31,6 +31,7 @@ function defaultData() {
     records: {}, // { profileId: { levelId: { best, time } } }
     zukan: {},   // { profileId: { monsterId: { n, kira, first } } }
     closet: {},  // { profileId: { itemId: { n, kira, first } } }  きせかえ
+    kparts: {}, kanji: {}, krec: {},  // かんじの パーツ・ずかん・きろく
     outfit: {},  // { profileId: { hair, top, bottom, dress, shoes, acc, hand, bg } }
     ta: {},      // { profileId: { levelId: best } }
   };
@@ -40,7 +41,7 @@ function load() {
   try { DB = JSON.parse(localStorage.getItem(STORE_KEY)) || defaultData(); }
   catch (e) { DB = defaultData(); }
   // 古いバージョンのデータに足りない項目を補う
-  DB.zukan = DB.zukan || {}; DB.ta = DB.ta || {}; DB.closet = DB.closet || {}; DB.outfit = DB.outfit || {}; DB.records = DB.records || {}; DB.usage = DB.usage || {};
+  DB.zukan = DB.zukan || {}; DB.ta = DB.ta || {}; DB.closet = DB.closet || {}; DB.outfit = DB.outfit || {}; DB.kparts = DB.kparts || {}; DB.kanji = DB.kanji || {}; DB.krec = DB.krec || {}; DB.records = DB.records || {}; DB.usage = DB.usage || {};
   DB.profiles.forEach((p, i) => { if (!p.theme) p.theme = ['sora', 'sakura', 'mori', 'yume'][i % 4]; if (p.title === undefined) p.title = ''; if (!p.style) p.style = p.id === 'p2' ? 'dressup' : 'monster'; });
 }
 function save() {
@@ -73,7 +74,7 @@ function hasKira(pid) { const c = closetOf(pid), o = outfitOf(pid); return Objec
 /* ========== 画面切り替え ========== */
 let current = null;      // 今あそんでいる子の id
 let screen = 'profiles';
-const COUNTED = new Set(['home', 'calc-menu', 'pref-menu', 'calc-play', 'pref-play', 'result', 'zukan', 'closet']);
+const COUNTED = new Set(['home', 'calc-menu', 'pref-menu', 'calc-play', 'pref-play', 'result', 'zukan', 'closet', 'kanji', 'kplay', 'kobo', 'kzukan']);
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 function go(name) {
@@ -406,11 +407,11 @@ function finishDress(n, time, isBest, prev) {
   $('#r-score').textContent = `1かいで せいかい ${n} / ${SET_SIZE}`;
   $('#r-detail').textContent = `${game.level.name}・${time} びょう` + (n < SET_SIZE ? '・ノーミスで キラキラに なるよ' : '');
   $('#r-best').textContent = isBest && prev ? '🎉 じこベスト こうしん!' : prev ? `じこベスト ${prev.best}もん・${prev.time}びょう` : '';
-  const w = $('#r-wear'); w.style.display = '';
+  const w = $('#r-wear'); w.style.display = ''; w.textContent = '👗 きてみる';
   w.onclick = () => { sound.tap(); wear(it); closetTab = it.cat; go('closet'); };
 }
-$('#r-again').onclick = () => { sound.tap(); game.kind === 'calc' ? startCalc(game.level) : game.kind === 'ta' ? startTA(game.level) : startPref(game.level); };
-$('#r-menu').onclick = () => { sound.tap(); go(game.kind === 'pref' ? 'pref-menu' : 'calc-menu'); };
+$('#r-again').onclick = () => { sound.tap(); game.kind === 'kanji' ? startKanji(game.grade, game.mode) : game.kind === 'calc' ? startCalc(game.level) : game.kind === 'ta' ? startTA(game.level) : startPref(game.level); };
+$('#r-menu').onclick = () => { sound.tap(); go(game.kind === 'kanji' ? 'kanji' : game.kind === 'pref' ? 'pref-menu' : 'calc-menu'); };
 $('#calc-quit').onclick = () => { sound.tap(); go('calc-menu'); };
 $('#pref-quit').onclick = () => { sound.tap(); go('pref-menu'); };
 
@@ -832,6 +833,7 @@ RENDER.parent = () => {
       <div class="row"><button class="sbtn" id="f-pin">暗証番号を変更</button></div>
       <div class="row" style="color:var(--sub);font-size:15px">記録と設定はこの端末の中だけに保存されます。ブラウザのデータを消すとリセットされます。<br>
       時間制限はアプリ内の仕組みなので、確実に止めたい場合は iPad のスクリーンタイム / Android のファミリーリンクも併用してください。</div>
+      <div class="row" style="color:var(--sub);font-size:13px">かんじの 字形・部首・ことばは KanjiVG(© Ulrich Apel, CC BY-SA 3.0)と KANJIDIC2・JMdict(© EDRDG, CC BY-SA 4.0)を もとに 作っています。辞書によって 部首の 決め方が ちがう 字は、部首の 問題に 出していません。</div>
       <div class="row" style="color:var(--sub);font-size:14px">バージョン ${APP_VERSION}</div>
     </div>`;
   body.querySelectorAll('.panel[data-pid]').forEach(el => {
@@ -849,7 +851,7 @@ RENDER.parent = () => {
     if (del) del.onclick = () => {
       if (!confirm(`${p.name}を削除しますか?記録とずかんも消えます。`)) return;
       DB.profiles = DB.profiles.filter(x => x !== p);
-      ['usage', 'records', 'zukan', 'ta', 'closet', 'outfit'].forEach(k => delete DB[k][p.id]);
+      ['usage', 'records', 'zukan', 'ta', 'closet', 'outfit', 'kparts', 'kanji', 'krec'].forEach(k => delete DB[k][p.id]);
       save(); RENDER.parent();
     };
   });

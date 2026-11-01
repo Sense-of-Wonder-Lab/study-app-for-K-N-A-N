@@ -1,0 +1,299 @@
+'use strict';
+/* ========== かんじ ==========
+ * データ(kanji-data.js)は 大きいので、かんじの 画面に はいったときに よみこむ
+ */
+const K_MODES = [
+  { t: '1', icon: '🔍', name: 'ぶしゅを こたえる', note: 'この かんじの ぶしゅは?' },
+  { t: '2', icon: '🤝', name: 'きょうつうの ぶしゅ', note: '3つに きょうつうする ぶしゅ' },
+  { t: '3', icon: '🎯', name: 'ぶしゅで さがす', note: 'その ぶしゅの かんじは どれ?' },
+  { t: '4', icon: '🗣️', name: 'よみかた', note: 'なんて よむ?' },
+  { t: '5', icon: '🧩', name: 'きょうつうの かんじ', note: '□間・□工 → 人' },
+  { t: '6', icon: '✏️', name: 'おくりがな', note: 'ただしい おくりがなは?' },
+  { t: '7', icon: '👯', name: 'おなじ よみの かんじ', note: '□園(こうえん)' },
+  { t: 'mix', icon: '🌈', name: 'ミックス', note: 'いろいろ まぜて' },
+];
+let kGrade = null;       // えらんでいる 学年
+let kSel = [];           // くみたて: えらんだ パーツ
+let kZukanGrade = null;
+
+function kpartsOf(pid) { return DB.kparts[pid] = DB.kparts[pid] || {}; }
+function kanjiOf(pid) { return DB.kanji[pid] = DB.kanji[pid] || {}; }
+
+function loadKanji(cb) {
+  if (typeof KD !== 'undefined') { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'kanji-data.js';
+  s.onload = () => { kPrepare(); cb(); };
+  s.onerror = () => flash('かんじの データが よみこめませんでした');
+  document.body.appendChild(s);
+}
+
+/* ---------- じけい(字形)を かく ---------- */
+// KanjiVG の 線で かくので、端末の フォントに よらず 教科書に ちかい 形に なる
+function kSVG(paths, vb, cls) {
+  return `<svg viewBox="${vb.join(' ')}" class="kg ${cls || ''}" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round">${paths.map(d => `<path d="${d}"/>`).join('')}</g></svg>`;
+}
+function kanjiSVG(k, cls) { return kSVG(KD.GL[k], [-2, -2, 113, 113], cls); }
+function partSVG(p, cls) {
+  if (KD.GL[p]) return kanjiSVG(p, cls);
+  const v = KD.PA[p]; return kSVG(v[0], v[1], cls);
+}
+function radSVG(name, cls) {
+  const v = KD.RG[name]; if (!v) return '';
+  const d = v[1] ? v[1].map(i => KD.GL[v[0]][i]) : KD.GL[v[0]];
+  return kSVG(d, v[1] ? v[2] : [-2, -2, 113, 113], cls);
+}
+
+/* ---------- パーツと くみたての じゅんび ---------- */
+let K_LEAVES = {}, K_ATOMIC = new Set(), K_RECIPE_KEY = {};
+function kPrepare() {
+  // それぞれの かんじに ひつような いちばん小さい パーツ(作った かんじも パーツに なる)
+  const memo = {};
+  const leaves = k => {
+    if (memo[k]) return memo[k];
+    const r = KD.REC[k];
+    if (!r) return memo[k] = [k];
+    let out = [];
+    r.forEach(p => { out = out.concat(KD.REC[p] !== undefined && KD.G[p] && KD.REC[p] ? leaves(p) : [p]); });
+    return memo[k] = out;
+  };
+  Object.keys(KD.G).forEach(k => {
+    K_LEAVES[k] = [...new Set(leaves(k))];
+    if (!KD.REC[k]) K_ATOMIC.add(k);
+    else K_RECIPE_KEY[k] = KD.REC[k].slice().sort().join('');
+  });
+}
+function kOwned(pid) {
+  // つかえる パーツ: もらった パーツ + 作った かんじ
+  return Object.assign({}, kpartsOf(pid), kanjiOf(pid));
+}
+function kMakeable(pid) {
+  const own = kOwned(pid), got = kanjiOf(pid);
+  return Object.keys(K_RECIPE_KEY).filter(k => !got[k] && KD.REC[k].every(p => own[p]));
+}
+// ごほうびの パーツを えらぶ: つぎに つくれそうな かんじの たりない パーツから
+function kRewardParts(g, n, prefer) {
+  const own = kOwned(current), got = kanjiOf(current), out = [];
+  const take = p => { if (!own[p] && !out.includes(p)) { out.push(p); own[p] = 1; } };
+  (prefer || []).forEach(p => { if (out.length < Math.ceil(n / 2) && Object.values(K_LEAVES).some(l => l.includes(p))) take(p); });
+  const targets = k => Object.keys(KD.G).filter(x => KD.G[x] === k && !got[x]);
+  let pool = targets(g);
+  if (!pool.length) pool = Object.keys(KD.G).filter(x => !got[x]);
+  let guard = 0;
+  while (out.length < n && pool.length && guard++ < 50) {
+    pool.sort((a, b) => K_LEAVES[a].filter(p => !own[p]).length - K_LEAVES[b].filter(p => !own[p]).length || Math.random() - .5);
+    const k = pool.find(x => K_LEAVES[x].some(p => !own[p]));
+    if (!k) break;
+    K_LEAVES[k].filter(p => !own[p]).forEach(p => { if (out.length < n) take(p); });
+  }
+  return out;
+}
+function kGive(parts) {
+  const kp = kpartsOf(current), kj = kanjiOf(current), newK = [];
+  parts.forEach(p => {
+    kp[p] = 1;
+    // それだけで かんじに なる パーツ(木・山 など)は そのまま ずかんに
+    if (K_ATOMIC.has(p) && !kj[p]) { kj[p] = today(); newK.push(p); }
+  });
+  save();
+  return newK;
+}
+
+/* ---------- メニュー ---------- */
+RENDER['kanji'] = () => {
+  loadKanji(() => {
+    const p = profile(current);
+    if (!kGrade) kGrade = Math.min(6, Math.max(1, p.grade));
+    $('#k-grades').innerHTML = [1, 2, 3, 4, 5, 6].map(g => `<button data-g="${g}" class="${g === kGrade ? 'on' : ''}">${g}ねん</button>`).join('');
+    $$('#k-grades button').forEach(b => b.onclick = () => { sound.tap(); kGrade = Number(b.dataset.g); RENDER.kanji(); });
+    const box = $('#k-modes'); box.innerHTML = '';
+    const best = (DB.krec[current] || {});
+    K_MODES.forEach(m => {
+      const n = m.t === 'mix' ? kMixPool(kGrade).length : (KD.QB[kGrade][m.t] || []).length;
+      if (n < SET_SIZE) return;  // もんだいが すくない ものは ださない(1ねんの 一部など)
+      const b = document.createElement('button');
+      b.className = 'big';
+      const r = best[kGrade + '_' + m.t];
+      b.innerHTML = `<span class="emoji">${m.icon}</span>${m.name}<span class="note">${m.note}</span><span class="best">${r ? '⭐'.repeat(stars(r)) + ' ' + r + '/' + SET_SIZE : ''}</span>`;
+      b.onclick = () => { sound.tap(); startKanji(kGrade, m.t); };
+      box.appendChild(b);
+    });
+    const got = kanjiOf(current), gn = Object.keys(KD.G).filter(k => KD.G[k] === kGrade).length;
+    const gg = Object.keys(got).filter(k => KD.G[k] === kGrade).length;
+    const mk = kMakeable(current).length;
+    $('#k-kobo-note').textContent = mk ? `いま つくれる かんじが ${mk}こ あるよ!` : 'パーツを くみあわせて かんじを つくろう';
+    $('#k-kobo-btn').classList.toggle('glow', mk > 0);
+    $('#k-zukan-note').textContent = `${kGrade}ねん ${gg} / ${gn}・ぜんぶ ${Object.keys(got).length} / 1026`;
+  });
+};
+function kMixPool(g) { return ['1', '2', '3', '4', '5', '6', '7'].flatMap(t => (KD.QB[g][t] || []).map(q => Object.assign({ t }, q))); }
+
+/* ---------- プレイ ---------- */
+function startKanji(g, t) {
+  const pool = t === 'mix' ? kMixPool(g) : KD.QB[g][t].map(q => Object.assign({ t }, q));
+  const items = shuffle(pool).slice(0, SET_SIZE);
+  game = { kind: 'kanji', grade: g, mode: t, items, i: 0, results: [], startAt: Date.now(), combo: 0 };
+  $('#kp-title').textContent = `${g}ねん・${K_MODES.find(m => m.t === t).name}`;
+  go('kplay');
+  showKanjiQ();
+}
+function kWord(w, h, cls) {
+  return [...w].map((ch, i) => i === h ? `<b class="${cls || 'hl'}">${esc(ch)}</b>` : esc(ch)).join('');
+}
+function showKanjiQ() {
+  $('#kp-fb').classList.remove('show');
+  locked = false;
+  const q = game.items[game.i];
+  $('#kp-gauge i').style.width = (game.i / SET_SIZE * 100) + '%';
+  $('#kp-count').textContent = `${game.i + 1} / ${SET_SIZE}`;
+  let prompt = '', body = '', opts = shuffle([q.a].concat(q.o)), render, big = false;
+  const radOpt = n => `<span class="ropt">${radSVG(n)}<small>${esc(n)}</small></span>`;
+  const kanjiOpt = k => kanjiSVG(k, 'kopt');
+  const txt = s => `<span class="topt">${esc(s)}</span>`;
+  switch (q.t) {
+    case '1': prompt = 'この かんじの ぶしゅは?'; body = kanjiSVG(q.k, 'kbig'); render = radOpt; break;
+    case '2': prompt = '3つの かんじに きょうつうする ぶしゅは?'; body = `<div class="k3">${q.ks.map(k => kanjiSVG(k, 'kmid')).join('')}</div>`; render = radOpt; break;
+    case '3': prompt = `ぶしゅが「${esc(q.n)}」の かんじは どれ?`; body = `<div class="krad">${radSVG(q.n, 'kmid')}</div>`; render = kanjiOpt; big = true; break;
+    case '4': prompt = 'よみかたは?'; body = `<div class="kword">${kWord(q.w, q.h)}</div>`; render = txt; break;
+    case '5': prompt = '□に きょうつうして はいる かんじは?'; body = `<div class="kslots">${q.s.map(s => `<span>${s.replace('□', '<i>□</i>')}</span>`).join('')}</div>`; render = txt; big = true; break;
+    case '6': prompt = 'おくりがなが ただしいのは?'; body = `<div class="kword kana">${esc(q.r)}</div>`; render = txt; break;
+    case '7': prompt = '□に はいる かんじは?'; body = `<div class="kword">${kWord(q.w.slice(0, q.h) + '□' + q.w.slice(q.h + 1), q.h, 'blank')}</div><div class="kreading">${esc(q.r)}</div>`; render = txt; big = true; break;
+  }
+  $('#kp-prompt').textContent = prompt;
+  $('#kp-body').innerHTML = body;
+  const box = $('#kp-choices');
+  box.className = 'choices kchoices' + (big ? ' bigk' : '');
+  box.innerHTML = '';
+  opts.forEach(o => {
+    const b = document.createElement('button');
+    b.innerHTML = render(o);
+    b.dataset.key = o;
+    b.onclick = () => answerKanji(b);
+    box.appendChild(b);
+  });
+}
+function answerKanji(btn) {
+  if (locked || btn.disabled) return;
+  const q = game.items[game.i];
+  const ok = btn.dataset.key === q.a;
+  showFb('#kp-fb', ok);
+  if (!ok) {
+    game.results[game.i] = false; game.combo = 0;
+    btn.classList.add('wrong'); btn.disabled = true;
+    sound.ng(); replay($('#kp-wrap'), 'shake');
+    return;
+  }
+  locked = true;
+  if (game.results[game.i] === undefined) game.results[game.i] = true;
+  game.combo++;
+  btn.classList.add('right'); sound.ok();
+  game.i++;
+  $('#kp-gauge i').style.width = (game.i / SET_SIZE * 100) + '%';
+  const g0 = game;
+  if (game.i >= SET_SIZE) { setTimeout(() => { if (game === g0 && screen === 'kplay') finishKanji(); }, 650); return; }
+  setTimeout(() => { if (game === g0 && screen === 'kplay') showKanjiQ(); }, 650);
+}
+function finishKanji() {
+  const n = game.results.filter(x => x).length, kira = n === SET_SIZE;
+  const rec = DB.krec[current] = DB.krec[current] || {};
+  const key = game.grade + '_' + game.mode, prev = rec[key] || 0;
+  if (n > prev) rec[key] = n;
+  // ぶしゅの 問題なら、こたえた ぶしゅの パーツを ゆうせん
+  const prefer = [];
+  game.items.forEach(q => {
+    const ks = q.t === '1' ? [q.k] : q.t === '2' ? q.ks : q.t === '3' ? [q.a] : [];
+    ks.forEach(k => { const f = KD.RF[k]; if (f && !prefer.includes(f)) prefer.push(f); });
+  });
+  const parts = kRewardParts(game.grade, kira ? 4 : 3, prefer);
+  const newK = kGive(parts);
+  save();
+  go('result');
+  $('#r-wear').style.display = 'none';
+  $('#r-mon').innerHTML = parts.length
+    ? `<div class="r-parts">${parts.map((p, i) => `<span style="animation-delay:${i * .18}s">${partSVG(p)}</span>`).join('')}</div>`
+    : '<div class="r-parts"><span>🏆</span></div>';
+  $('#r-get').textContent = parts.length ? `パーツを ${parts.length}こ ゲット!` : 'パーツは ぜんぶ あつまっているよ!';
+  const mk = kMakeable(current).length;
+  $('#r-badges').innerHTML = (kira ? '<span class="badge kira">✨ ノーミス! +1こ</span>' : '') +
+    (newK.length ? `<span class="badge">「${newK.join('」「')}」が ずかんに!</span>` : '') +
+    (mk ? `<span class="badge best">🧩 つくれる かんじ ${mk}こ</span>` : '');
+  $('#r-stars').textContent = '⭐'.repeat(stars(n)) + '☆'.repeat(3 - stars(n));
+  $('#r-score').textContent = `1かいで せいかい ${n} / ${SET_SIZE}`;
+  $('#r-detail').textContent = `${game.grade}ねん・${K_MODES.find(m => m.t === game.mode).name}` + (kira ? '' : '・ノーミスで パーツが 1こ ふえるよ');
+  $('#r-best').textContent = n > prev && prev ? '🎉 じこベスト こうしん!' : prev ? `じこベスト ${prev}もん` : '';
+  const w = $('#r-wear');
+  if (mk) { w.style.display = ''; w.textContent = '🧩 くみたてる'; w.onclick = () => { sound.tap(); go('kobo'); }; }
+  sound.fanfare();
+}
+$('#kp-quit').onclick = () => { sound.tap(); go('kanji'); };
+
+/* ---------- くみたて こうぼう ---------- */
+RENDER['kobo'] = () => {
+  loadKanji(() => {
+    const own = kOwned(current);
+    const list = Object.keys(own);
+    // よく つかう パーツを まえに
+    const use = {};
+    Object.values(KD.REC).forEach(r => r && r.forEach(p => use[p] = (use[p] || 0) + 1));
+    list.sort((a, b) => (use[b] || 0) - (use[a] || 0) || (KD.G[a] || 9) - (KD.G[b] || 9));
+    $('#kb-tray').innerHTML = list.length ? list.map(p => `<button data-p="${esc(p)}" class="${kSel.includes(p) ? 'on' : ''}${KD.G[p] ? ' isk' : ''}">${partSVG(p)}</button>`).join('')
+      : '<p class="sub">まだ パーツが ないよ。かんじの もんだいを といて あつめよう!</p>';
+    // おなじ パーツを 2かい えらんでも よい(林 = 木 + 木)
+    $$('#kb-tray button').forEach(b => b.onclick = () => {
+      if (kSel.length >= 4) return;
+      sound.tap(); kSel.push(b.dataset.p); RENDER.kobo();
+    });
+    $('#kb-slots').innerHTML = [0, 1, 2, 3].map(i => `<span data-i="${i}" class="${kSel[i] ? 'on' : ''}">${kSel[i] ? partSVG(kSel[i]) : ''}</span>`).join('<b>+</b>');
+    $$('#kb-slots span.on').forEach(s => s.onclick = () => { sound.tap(); kSel.splice(Number(s.dataset.i), 1); RENDER.kobo(); });
+    $('#kb-make').disabled = kSel.length < 2;
+    const mk = kMakeable(current).length;
+    $('#kb-hint').textContent = mk ? `いま つくれる かんじが ${mk}こ あるよ` : 'パーツを 2〜4こ えらんで「くみたてる」';
+    $('#kb-count').textContent = `パーツ ${Object.keys(kpartsOf(current)).length}こ`;
+  });
+};
+$('#kb-clear').onclick = () => { sound.tap(); kSel = []; RENDER.kobo(); };
+$('#kb-make').onclick = () => {
+  const key = kSel.slice().sort().join('');
+  const got = kanjiOf(current);
+  const hits = Object.keys(K_RECIPE_KEY).filter(k => K_RECIPE_KEY[k] === key).sort((a, b) => (got[a] ? 1 : 0) - (got[b] ? 1 : 0) || KD.G[a] - KD.G[b]);
+  if (!hits.length) {
+    sound.ng(); replay($('#kb-slots'), 'shake');
+    $('#kb-hint').textContent = 'その くみあわせでは できなかった…';
+    return;
+  }
+  const k = hits[0], isNew = !got[k];
+  if (isNew) { got[k] = today(); save(); }
+  kSel = [];
+  sound.fanfare();
+  openKanjiCard(k, isNew ? '✨ あたらしい かんじが できた!' : 'もう ずかんに あるよ');
+  RENDER.kobo();
+};
+
+/* ---------- ずかん ---------- */
+RENDER['kzukan'] = () => {
+  loadKanji(() => {
+    const p = profile(current);
+    if (!kZukanGrade) kZukanGrade = kGrade || Math.min(6, Math.max(1, p.grade));
+    const got = kanjiOf(current);
+    $('#kz-grades').innerHTML = [1, 2, 3, 4, 5, 6].map(g => {
+      const all = Object.keys(KD.G).filter(k => KD.G[k] === g);
+      return `<button data-g="${g}" class="${g === kZukanGrade ? 'on' : ''}">${g}ねん<small>${all.filter(k => got[k]).length}/${all.length}</small></button>`;
+    }).join('');
+    $$('#kz-grades button').forEach(b => b.onclick = () => { sound.tap(); kZukanGrade = Number(b.dataset.g); RENDER.kzukan(); });
+    const ks = Object.keys(KD.G).filter(k => KD.G[k] === kZukanGrade).sort((a, b) => KD.SC[a] - KD.SC[b] || a.localeCompare(b));
+    $('#kz-count').textContent = `📖 ぜんぶで ${Object.keys(got).length} / 1026`;
+    $('#kz-grid').innerHTML = ks.map(k => got[k] ? `<button class="kz on" data-k="${k}">${kanjiSVG(k)}</button>` : '<span class="kz"></span>').join('');
+    $$('#kz-grid button').forEach(b => b.onclick = () => { sound.tap(); openKanjiCard(b.dataset.k); });
+  });
+};
+function openKanjiCard(k, title) {
+  const rn = KD.RN[k];
+  const ex = (KD.EX[k] || []).map(([w, r]) => `<li>${esc(w)}<small>${esc(r)}</small></li>`).join('');
+  $('#zk-box').innerHTML = `${title ? `<p class="kc-title">${title}</p>` : ''}<div class="kc-glyph">${kanjiSVG(k)}</div>
+    <p>${KD.G[k]}ねんせいの かんじ・${KD.SC[k]}かく</p>
+    ${rn ? `<p class="kc-rad">${radSVG(rn)}<span>ぶしゅ: ${esc(rn)}</span></p>` : ''}
+    ${ex ? `<ul class="kc-ex">${ex}</ul>` : ''}
+    <div class="btnrow" style="margin-top:12px"><button class="btn" id="zk-close">とじる</button></div>`;
+  $('#zk-modal').classList.add('on');
+  $('#zk-close').onclick = () => $('#zk-modal').classList.remove('on');
+}
