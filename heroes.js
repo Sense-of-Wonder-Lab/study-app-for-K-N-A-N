@@ -22,6 +22,55 @@ const HERO_TYPES = {
   wolf:     { name: 'ウルフ忍者',    weapon: 'kunai',   pals: ['#8e96a6', '#5a5f70', '#c4a27a', '#2e3040'] },
   beetle:   { name: 'カブト',        weapon: 'lance',   pals: ['#7a4a2a', '#2f5f8f', '#2f8f4f', '#1f1f2a'] },
   trike:    { name: 'トリケラ',      weapon: 'hammer',  pals: ['#c9813a', '#4f8fa8', '#8fae4a', '#4a3a5a'] },
+  stego:    { name: 'ステゴ',        weapon: 'mace',    pals: ['#6aa86a', '#c98a4a', '#5a8ac0', '#3a4a3a'] },
+  ptera:    { name: 'プテラ',        weapon: 'bow',     pals: ['#c07a4a', '#7a8ac8', '#5aa88a', '#4a3040'] },
+  spino:    { name: 'スピノ',        weapon: 'spear',   pals: ['#4a9a8a', '#c0504a', '#8a7ac0', '#2a3a3a'] },
+  stag:     { name: 'クワガタ',      weapon: 'katana',  pals: ['#4a3a30', '#3a5a8a', '#8a3a2a', '#1a1a22'] },
+  mantis:   { name: 'カマキリ',      weapon: 'scythe',  pals: ['#6abf4a', '#c0a83a', '#4aa8a0', '#3a5a2a'] },
+  scorpion: { name: 'サソリ',        weapon: 'spear',   pals: ['#c0603a', '#5a4a8a', '#c0a050', '#2a1a2a'] },
+  samurai:  { name: 'サムライ',      weapon: 'katana',  pals: ['#c0403a', '#3a5aa0', '#3a8a5a', '#2a2a3a'], human: 1 },
+  ninja:    { name: 'ニンジャ',      weapon: 'kunai',   pals: ['#3a3550', '#3a5a8a', '#8a3a3a', '#1a1a22'], human: 1 },
+  oni:      { name: 'オニ',          weapon: 'kanabo',  pals: ['#e0503a', '#4a7ac0', '#e0b030', '#5a2a5a'] },
+  tengu:    { name: 'テング',        weapon: 'fan',     pals: ['#d84a3a', '#5a7a5a', '#8a5ac0', '#3a2a2a'] },
+  trainbot: { name: 'トレインロボ',  weapon: 'hammer',  pals: ['#3fa860', '#e0503f', '#3f7fe0', '#2a3a4a'], robo: 1 },
+  policebot:{ name: 'ポリスロボ',    weapon: 'laser',   pals: ['#f2f2f2', '#3f7fe0', '#e0a03f', '#2a2a30'], robo: 1 },
+  tankbot:  { name: 'タンクロボ',    weapon: 'cannon',  pals: ['#6a7a4a', '#a08a5a', '#5a6a8a', '#33382a'], robo: 1 },
+  phoenix:  { name: 'フェニックス',  weapon: 'firesword', pals: ['#f0702a', '#3a9af0', '#f0c030', '#7a2a8a'] },
+  cerberus: { name: 'ケルベロス',    weapon: 'axe',     pals: ['#5a5068', '#a05a3a', '#4a6a8a', '#2a1a2a'] },
+  kraken:   { name: 'クラーケン',    weapon: 'trident', pals: ['#c05a8a', '#5a6ac0', '#3a9a7a', '#3a2a4a'] },
+  alien:    { name: 'エイリアン',    weapon: 'raygun',  pals: ['#7ad06a', '#a08ae0', '#5ac0d0', '#3a4a3a'] },
+  astro:    { name: 'スペースナイト', weapon: 'laser',  pals: ['#e8ecf2', '#f0a03a', '#5a9af0', '#3a3a4a'], human: 1 },
+};
+// それぞれの キャラの なまえ(色ちがいも べつの なまえ。4ばんめは ボス)
+const HERO_NAMES = {
+  dragon: ['バーンドラ', 'アクアドラ', 'ガイアドラ', 'ダークドラグーン'],
+  eagle: ['ホークマル', 'スカイホーク', 'ゴルドホーク', 'ブラックファルコン'],
+  shark: ['ジョーズン', 'ディープシャーク', 'エメラシャーク', 'キングメガロ'],
+  tiger: ['トラマル', 'ビャッコマル', 'キンガトラ', 'カゲトラオウ'],
+  lion: ['レオンマル', 'ガオレオン', 'ホワイトレオ', 'レオカイザー'],
+  trex: ['ティラボ', 'バイオティラ', 'マグマティラ', 'ジュラシックオウ'],
+  robot: ['メカボ', 'レッドメカ', 'ブルーメカ', 'メカジェネラル'],
+  wolf: ['カゲロウ', 'ヤミウルフ', 'スナウルフ', 'ロウガ'],
+  beetle: ['ツノマル', 'アオヅノ', 'ミドリヅノ', 'ヘラクレオン'],
+  trike: ['トリケラン', 'アクアトリケ', 'リーフトリケ', 'トリケラジャイアント'],
+  stego: ['ステゴン', 'サンドステゴ', 'アイスステゴ', 'ステゴフォートレス'],
+  ptera: ['プテラン', 'ソニックプテラ', 'ウィンドプテラ', 'ストームプテラ'],
+  spino: ['スピノン', 'クリムゾンスピノ', 'ミストスピノ', 'スピノエンペラー'],
+  stag: ['クワガン', 'ブルークワガ', 'レッドクワガ', 'オオクワカイザー'],
+  mantis: ['カマキラー', 'ゴールドカマキ', 'アクアカマキ', 'シノビカマキリ'],
+  scorpion: ['サソリン', 'ナイトサソリ', 'サバクサソリ', 'デススコーピオ'],
+  samurai: ['ムサシ', 'アオザムライ', 'ミドリマル', 'ショウグン'],
+  ninja: ['ハヤテ', 'アオカゼ', 'ホムラ', 'カゲノオウ'],
+  oni: ['アカオニン', 'アオオニン', 'キオニン', 'オニガシラ'],
+  tengu: ['テングマル', 'コノハテング', 'カラステング', 'ダイテング'],
+  trainbot: ['シンカンオー', 'ファイアライナー', 'ブルーエクスプレス', 'ナイトライナー'],
+  policebot: ['パトロイド', 'ブルーパトロ', 'ハイウェイロボ', 'ブラックポリス'],
+  tankbot: ['タンクロン', 'デザートタンク', 'アイアンタンク', 'ギガタンク'],
+  phoenix: ['フレアバード', 'アクアバード', 'サンバード', 'ノヴァフェニックス'],
+  cerberus: ['ケルベロン', 'マグマケルベ', 'ブルーケルベ', 'ヘルケルベロス'],
+  kraken: ['タコリアン', 'ディープイカ', 'リーフクラーケン', 'クラーケンロード'],
+  alien: ['ピピリン', 'ポポリン', 'ププリン', 'ギャラクシーオウ'],
+  astro: ['コスモナイト', 'サンナイト', 'スターナイト', 'ギャラクシーナイト'],
 };
 
 /* ---------- ぶき(右手に もつ。手の 位置は 152,138) ---------- */
@@ -51,6 +100,21 @@ function heroWeapon(kind, c) {
       <rect x="140" y="26" width="58" height="34" rx="8" transform="rotate(10 169 43)" fill="${steel2}" ${S}/><rect x="146" y="30" width="12" height="26" rx="3" transform="rotate(10 169 43)" fill="${gold}" ${HL(2)}/>`;
     case 'laser': return `<path d="M156,128 L190,24" stroke="#59f0ff" stroke-width="18" stroke-linecap="round" opacity=".35"/><path d="M156,128 L190,24" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
       <path d="M150,148 L158,124" ${HL(11)}/><path d="M150,148 L158,124" stroke="#5b6270" stroke-width="7" stroke-linecap="round"/><circle cx="154" cy="136" r="3" fill="#59f0ff"/>`;
+    case 'mace': return `<path d="M168,60 L148,176" ${HL(10)}/><path d="M168,60 L148,176" stroke="${wood}" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="170" cy="48" r="17" fill="${steel2}" ${S}/>${[0, 1, 2, 3, 4, 5, 6, 7].map(k => { const a = k * Math.PI / 4; return `<path d="M${170 + 15 * Math.cos(a - .25)},${48 + 15 * Math.sin(a - .25)} L${170 + 27 * Math.cos(a)},${48 + 27 * Math.sin(a)} L${170 + 15 * Math.cos(a + .25)},${48 + 15 * Math.sin(a + .25)}" fill="${steel}" ${HL(2.5)}/>`; }).join('')}`;
+    case 'kanabo': return `<path d="M152,150 L178,30" ${HL(26)}/><path d="M152,150 L178,30" stroke="#5a5060" stroke-width="20" stroke-linecap="round"/>
+      ${[0, 1, 2, 3, 4, 5].map(k => { const t = k / 5, x = 172 - t * 18, y = 40 + t * 80; return `<circle cx="${x - 7}" cy="${y}" r="3.2" fill="${steel}" ${HL(1.5)}/><circle cx="${x + 7}" cy="${y + 6}" r="3.2" fill="${steel}" ${HL(1.5)}/>`; }).join('')}`;
+    case 'bow': return `<path d="M168,40 Q204,110 160,180" fill="none" ${HL(9)}/><path d="M168,40 Q204,110 160,180" fill="none" stroke="${wood}" stroke-width="5" stroke-linecap="round"/>
+      <path d="M168,40 L160,180" stroke="#fff" stroke-width="2"/><path d="M200,100 L130,124" ${HL(4)}/><path d="M130,124 l10,-8 l-2,12 Z" fill="${steel}" ${HL(2)}/><path d="M200,100 l-8,-6 m8,6 l-4,8" ${HL(3)}/>`;
+    case 'scythe': return `<path d="M170,30 L146,186" ${HL(9)}/><path d="M170,30 L146,186" stroke="${wood}" stroke-width="5" stroke-linecap="round"/>
+      <path d="M170,32 Q130,8 96,34 Q132,30 166,48 Z" fill="${steel}" ${S}/>`;
+    case 'fan': return `<path d="M152,146 L166,90" ${HL(8)}/><path d="M152,146 L166,90" stroke="${wood}" stroke-width="4" stroke-linecap="round"/>
+      ${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(k => { const a = -2.4 + k * 0.22; return `<path d="M166,90 L${166 + 46 * Math.cos(a)},${90 + 46 * Math.sin(a)} L${166 + 46 * Math.cos(a + .22)},${90 + 46 * Math.sin(a + .22)} Z" fill="${k % 2 ? '#3a8a4a' : '#5ab05a'}" ${HL(2)}/>`; }).join('')}`;
+    case 'cannon': return `<rect x="138" y="122" width="56" height="26" rx="8" transform="rotate(-25 150 135)" fill="#5a6050" ${S}/><rect x="182" y="102" width="12" height="30" rx="3" transform="rotate(-25 150 135)" fill="#3a4030" ${HL(3)}/><circle cx="150" cy="136" r="5" fill="#f2c230"/>`;
+    case 'raygun': return `<path d="M144,146 L156,130 L188,116 Q196,114 194,124 L162,140 Z" fill="${steel2}" ${S}/><circle cx="194" cy="119" r="6" fill="#59f0ff" ${HL(2)}/><path d="M146,148 L140,164" ${HL(9)}/><path d="M146,148 L140,164" stroke="#5a6070" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="198" cy="110" r="4" fill="#59f0ff" opacity=".7"/><circle cx="196" cy="100" r="2.5" fill="#59f0ff" opacity=".5"/>`;
+    case 'firesword': return `<path d="M150,140 L176,36 L184,40 L160,142 Z" fill="#ffd23f" ${S}/><path d="M172,30 Q186,10 178,0 Q196,14 190,40 Q200,30 196,20 Q206,44 186,58 Z" fill="#ff7a2a" ${HL(2.5)}/><path d="M178,40 Q186,28 184,18 Q192,32 186,46 Z" fill="#ffe58a"/>
+      <path d="M140,138 L170,146" ${HL(9)}/><path d="M140,138 L170,146" stroke="#e8473d" stroke-width="5" stroke-linecap="round"/><path d="M152,146 L147,166" ${HL(8)}/><path d="M152,146 L147,166" stroke="#7a3b2a" stroke-width="4" stroke-linecap="round"/>`;
     case 'kunai': return `<path d="M150,142 L178,92 L186,98 L156,144 Z" fill="${steel}" ${S}/><path d="M150,146 L142,160" ${HL(8)}/><path d="M150,146 L142,160" stroke="#3b3550" stroke-width="4" stroke-linecap="round"/><circle cx="140" cy="164" r="5" fill="none" ${HL(3)}/>
       <g transform="translate(176 52) rotate(20)"><path d="M0,-16 L4,-4 L16,0 L4,4 L0,16 L-4,4 L-16,0 L-4,-4 Z" fill="${steel}" ${HL(3)}/><circle r="3.5" fill="${HERO_LINE}"/></g>`;
   }
@@ -223,8 +287,196 @@ const HERO_HEADS = {
     };
   },
 };
-const HERO_BELLY = { dragon: 1, shark: '#f2f5f8', tiger: '#fff8ee', lion: '#fff4dc', trex: 1, wolf: '#f3f1ee', trike: 1, eagle: '#f6f3ea' };
+const SKIN = '#ffd9b8';
+Object.assign(HERO_HEADS, {
+  stego(c) {
+    const p = hshade(c, -0.15), l = hshade(c, 0.5);
+    return {
+      back: [[46, 84, 14], [56, 50, 16], [80, 26, 17], [120, 26, 17], [144, 50, 16], [154, 84, 14]].map(([x, y, r]) => `<path d="M${x - r * .8},${y + r} Q${x - r},${y - r * .2} ${x},${y - r * 1.3} Q${x + r},${y - r * .2} ${x + r * .8},${y + r} Z" fill="#e8a83a" ${HL(3)}/>`).join('') +
+        `<path d="M126,162 Q160,166 176,150" fill="none" ${HL(12)}/><path d="M126,162 Q160,166 176,150" fill="none" stroke="${c}" stroke-width="6"/><path d="M172,150 l10,-14 M176,152 l14,-6" ${HL(4)}/>`,
+      head: `<path d="M58,78 Q56,40 100,38 Q144,40 142,78 Q142,104 100,108 Q58,104 58,78 Z" fill="${c}" ${HL()}/>
+        <path d="M70,86 Q100,78 130,86 Q128,106 100,108 Q72,106 70,86 Z" fill="${l}" ${HL(3)}/>${fangMouth(100, 96, 12)}
+        <circle cx="74" cy="58" r="4" fill="${p}"/><circle cx="128" cy="54" r="5" fill="${p}"/>${heroEyes(82, 118, 68, { iris: '#c97a10' })}`,
+    };
+  },
+  ptera(c) {
+    const d = hshade(c, -0.25), l = hshade(c, 0.45);
+    return {
+      back: `<path d="M68,116 L8,80 L20,118 L4,128 L30,140 L28,154 L70,138 Z" fill="${d}" ${HL()}/><path d="M132,116 L192,80 L180,118 L196,128 L170,140 L172,154 L130,138 Z" fill="${d}" ${HL()}/>`,
+      head: `<path d="M70,50 Q40,10 20,14 Q50,30 72,64 Z" fill="${d}" ${HL()}/>
+        <path d="M62,76 Q60,40 100,38 Q140,40 138,76 Q138,98 100,102 Q62,98 62,76 Z" fill="${c}" ${HL()}/>
+        <path d="M96,78 L180,92 L100,98 Z" fill="${l}" ${HL(3.5)}/><path d="M104,90 L176,92" stroke="${HERO_LINE}" stroke-width="2.5"/>${heroEyes(80, 112, 62, { iris: '#e8473d' })}`,
+    };
+  },
+  spino(c) {
+    const s2 = hshade(c, -0.2), l = hshade(c, 0.5);
+    return {
+      back: `<path d="M72,110 Q66,40 100,30 Q138,40 130,110 Z" fill="#e05a5a" ${HL()}/>${[0, 1, 2, 3].map(k => `<path d="M${84 + k * 12},40 L${86 + k * 10},106" stroke="${HERO_LINE}" stroke-width="2"/>`).join('')}
+        <path d="M126,160 Q170,160 192,176 Q170,184 124,176" fill="${c}" ${HL()}/>`,
+      head: `<path d="M58,76 Q56,44 96,42 Q120,42 128,56 L170,70 Q176,84 160,88 L66,96 Q56,90 58,76 Z" fill="${c}" ${HL()}/>
+        <path d="M70,92 L160,86 Q156,100 110,106 Q72,108 70,92 Z" fill="${l}" ${HL(3)}/>
+        <path d="M76,92 ${[0, 1, 2, 3, 4, 5, 6, 7].map(k => `L${82 + k * 10},${k % 2 ? 92 : 99}`).join(' ')} L156,88" fill="#fff" ${HL(2)}/>
+        <circle cx="162" cy="74" r="2.5" fill="${HERO_LINE}"/>${heroEyes(84, 112, 62, { iris: '#f2c230' })}`,
+    };
+  },
+  stag(c) {
+    const l = hshade(c, 0.4);
+    return {
+      back: `<path d="M66,118 Q30,110 34,150 Q52,148 68,136 Z M134,118 Q170,110 166,150 Q148,148 132,136 Z" fill="${c}" ${HL()}/>`,
+      head: `<path d="M80,44 Q50,30 60,4 Q66,22 84,22 L80,14 Q92,24 92,40 Z M120,44 Q150,30 140,4 Q134,22 116,22 L120,14 Q108,24 108,40 Z" fill="${hshade(c, -0.2)}" ${HL()}/>
+        <path d="M58,78 Q56,38 100,36 Q144,38 142,78 Q142,104 100,108 Q58,104 58,78 Z" fill="${c}" ${HL()}/><path d="M70,48 Q86,40 96,42" fill="none" stroke="${l}" stroke-width="5" stroke-linecap="round"/>
+        <path d="M66,60 Q100,50 134,60 L134,82 Q100,74 66,82 Z" fill="#1d1a24" ${HL(3)}/>${heroEyes(84, 116, 68, { glow: '#ff5a3d', nobrow: true })}
+        <path d="M80,94 L120,94" ${HL(3.5)}/>`,
+    };
+  },
+  mantis(c) {
+    const l = hshade(c, 0.45);
+    return {
+      back: `<path d="M70,118 Q40,90 30,60 Q48,80 64,86 Z" fill="${l}" ${HL(3)}/><path d="M130,118 Q160,90 170,60 Q152,80 136,86 Z" fill="${l}" ${HL(3)}/>`,
+      head: `<path d="M82,40 Q70,10 56,6 M118,40 Q130,10 144,6" fill="none" ${HL(3.5)}/>
+        <path d="M50,52 Q100,30 150,52 L112,108 Q100,114 88,108 Z" fill="${c}" ${HL()}/>
+        <ellipse cx="66" cy="62" rx="16" ry="20" fill="#3a5a2a" ${HL(3)}/><ellipse cx="134" cy="62" rx="16" ry="20" fill="#3a5a2a" ${HL(3)}/>
+        <circle cx="70" cy="56" r="5" fill="#fff"/><circle cx="130" cy="56" r="5" fill="#fff"/>
+        <path d="M70,40 L90,52 M130,40 L110,52" ${HL(5)}/><path d="M92,96 L108,96" ${HL(3)}/>`,
+    };
+  },
+  scorpion(c) {
+    const d = hshade(c, -0.25);
+    const seg = [[60, 150], [40, 128], [30, 100], [34, 74], [50, 56]];  // しっぽは ぶきと はんたいの 左がわ
+    return {
+      back: seg.map(([x, y], k) => `<ellipse cx="${x}" cy="${y}" rx="${14 - k}" ry="${11 - k}" fill="${k % 2 ? d : c}" ${HL(3)}/>`).join('') + `<path d="M50,46 Q60,30 72,38 Q60,40 56,52 Z" fill="#f2c230" ${HL(3)}/>`,
+      head: `<path d="M60,78 Q58,40 100,38 Q142,40 140,78 Q140,102 100,106 Q60,102 60,78 Z" fill="${c}" ${HL()}/>
+        <path d="M60,62 Q100,50 140,62" fill="none" stroke="${d}" stroke-width="6"/>
+        ${heroEyes(82, 118, 72, { iris: '#2b2230' })}<path d="M86,94 l-6,10 M114,94 l6,10" ${HL(3.5)}/><path d="M88,92 Q100,98 112,92" fill="none" ${HL(3)}/>`,
+    };
+  },
+  samurai(c) {
+    const g = '#f2c230';
+    return {
+      head: `<path d="M100,30 Q70,0 60,10 Q78,14 92,34 Z M100,30 Q130,0 140,10 Q122,14 108,34 Z" fill="${g}" ${HL(3)}/>
+        <path d="M58,70 Q56,30 100,28 Q144,30 142,70 Z" fill="${hshade(c, -0.3)}" ${HL()}/>
+        <path d="M48,70 L152,70 L144,88 L56,88 Z" fill="${hshade(c, -0.3)}" ${HL()}/>
+        <path d="M66,66 Q100,58 134,66 Q138,106 100,108 Q62,106 66,66 Z" fill="${SKIN}" ${HL()}/>
+        ${heroEyes(84, 116, 80, { iris: '#2b2230' })}<path d="M92,98 Q100,94 108,98" fill="none" ${HL(3)}/>
+        <circle cx="100" cy="46" r="7" fill="${g}" ${HL(2.5)}/>`,
+    };
+  },
+  ninja(c) {
+    return {
+      back: `<path d="M64,52 Q38,44 26,30 M64,58 Q40,64 24,54" fill="none" stroke="${hshade(c, 0.3)}" stroke-width="7" stroke-linecap="round"/>`,
+      head: `<path d="M56,76 Q54,32 100,30 Q146,32 144,76 Q144,104 100,108 Q56,104 56,76 Z" fill="${c}" ${HL()}/>
+        <path d="M64,62 Q100,52 136,62 L134,82 Q100,76 66,82 Z" fill="${SKIN}" ${HL(3)}/>
+        <path d="M58,50 Q100,38 142,50" fill="none" stroke="${hshade(c, 0.3)}" stroke-width="8"/><rect x="92" y="40" width="16" height="12" rx="2" fill="#dfe6ee" ${HL(2)}/>
+        ${heroEyes(84, 116, 70, { iris: '#2b2230' })}`,
+    };
+  },
+  oni(c) {
+    const l = hshade(c, 0.4);
+    return {
+      head: `<path d="M74,38 L66,8 L88,32 Z M126,38 L134,8 L112,32 Z" fill="#fff6dc" ${HL()}/>
+        ${[0, 1, 2, 3, 4, 5, 6].map(k => `<circle cx="${64 + k * 12}" cy="${40 + (k % 2) * 4}" r="10" fill="#2b2230"/>`).join('')}
+        <path d="M58,80 Q56,42 100,40 Q144,42 142,80 Q142,106 100,108 Q58,106 58,80 Z" fill="${c}" ${HL()}/>
+        <path d="M80,94 Q100,104 120,94 L118,100 Q100,110 82,100 Z" fill="#fff" ${HL(3)}/><path d="M84,96 L86,86 L90,96 M116,96 L114,86 L110,96" fill="#fff" ${HL(2.5)}/>
+        <ellipse cx="100" cy="82" rx="7" ry="5" fill="${l}"/>${heroEyes(82, 118, 68, { iris: '#f2c230' })}`,
+      tigerShorts: 1,
+    };
+  },
+  tengu(c) {
+    return {
+      back: `<path d="M68,116 Q14,96 10,130 Q26,128 24,146 Q38,136 44,152 Q54,134 70,138 Z" fill="#2b2230" ${HL()}/><path d="M132,116 Q186,96 190,130 Q174,128 176,146 Q162,136 156,152 Q146,134 130,138 Z" fill="#2b2230" ${HL()}/>`,
+      head: `<path d="M100,40 L88,28 L100,14 L112,28 Z" fill="#2b2230" ${HL(3)}/>
+        ${[0, 1, 2, 3, 4].map(k => `<path d="M${64 + k * 18},44 q9,-14 18,0" fill="#f6f3ea" ${HL(2.5)}/>`).join('')}
+        <path d="M58,80 Q56,44 100,42 Q144,44 142,80 Q142,106 100,108 Q58,106 58,80 Z" fill="${c}" ${HL()}/>
+        <path d="M60,86 Q60,110 76,112 Q100,118 124,112 Q140,110 140,86 Q100,104 60,86 Z" fill="#f6f3ea" ${HL(3)}/>
+        <path d="M94,74 Q100,70 106,74 L150,82 Q156,88 148,90 L100,90 Q92,84 94,74 Z" fill="${hshade(c, -0.1)}" ${HL()}/>
+        ${heroEyes(80, 114, 66, { iris: '#2b2230' })}`,
+    };
+  },
+  trainbot(c) {
+    return {
+      head: `<path d="M58,104 L58,52 Q58,28 100,26 Q142,28 142,52 L142,104 Z" fill="${c}" ${HL()}/>
+        <path d="M66,40 Q100,30 134,40 L132,70 L68,70 Z" fill="#1d2433" ${HL(3)}/><path d="M76,56 L92,50 L92,64 Z M124,56 L108,50 L108,64 Z" fill="#59f0ff"/>
+        <path d="M58,80 L142,80" stroke="#f2f2f2" stroke-width="6"/><circle cx="72" cy="94" r="7" fill="#fff6b0" ${HL(3)}/><circle cx="128" cy="94" r="7" fill="#fff6b0" ${HL(3)}/>
+        <rect x="88" y="88" width="24" height="12" rx="3" fill="#5a6070" ${HL(2.5)}/>`,
+    };
+  },
+  policebot(c) {
+    const d = c === '#f2f2f2' ? '#2a2a30' : hshade(c, -0.4);
+    return {
+      head: `<rect x="80" y="14" width="18" height="14" rx="4" fill="#e8473d" ${HL(3)}/><rect x="102" y="14" width="18" height="14" rx="4" fill="#3f7fe0" ${HL(3)}/>
+        <rect x="56" y="28" width="88" height="78" rx="16" fill="${c}" ${HL()}/><path d="M56,58 L144,58 L144,76 L56,76 Z" fill="${d}"/>
+        <rect x="66" y="52" width="68" height="28" rx="10" fill="#1d2433" ${HL(3)}/><path d="M74,62 L92,58 L92,72 L76,72 Z M126,62 L108,58 L108,72 L124,72 Z" fill="#59f0ff"/>
+        <path d="M86,34 L100,42 L114,34 L110,48 L90,48 Z" fill="#f2c230" ${HL(2.5)}/><path d="M76,94 L124,94" ${HL(4)}/>`,
+    };
+  },
+  tankbot(c) {
+    return {
+      back: `<rect x="96" y="6" width="74" height="14" rx="4" transform="rotate(-12 100 24)" fill="#4a5038" ${HL(3.5)}/>`,
+      head: `<path d="M60,104 L54,56 Q60,34 100,32 Q140,34 146,56 L140,104 Z" fill="${c}" ${HL()}/>
+        <ellipse cx="100" cy="36" rx="30" ry="12" fill="${hshade(c, -0.2)}" ${HL(3.5)}/>
+        <rect x="66" y="56" width="68" height="26" rx="8" fill="#1d2433" ${HL(3)}/><path d="M74,66 L92,62 L92,74 L76,74 Z M126,66 L108,62 L108,74 L124,74 Z" fill="#ff5a3d"/>
+        <circle cx="74" cy="94" r="4" fill="${hshade(c, -0.3)}"/><circle cx="100" cy="96" r="4" fill="${hshade(c, -0.3)}"/><circle cx="126" cy="94" r="4" fill="${hshade(c, -0.3)}"/>`,
+      treads: 1,
+    };
+  },
+  phoenix(c) {
+    const y = '#ffd23f', l = hshade(c, 0.4);
+    const flame = (x, y0, s) => `<path d="M${x},${y0} Q${x - 10 * s},${y0 - 20} ${x},${y0 - 40} Q${x + 4 * s},${y0 - 24} ${x + 14 * s},${y0 - 30} Q${x + 8 * s},${y0 - 12} ${x + 4 * s},${y0}" fill="${y}" ${HL(2.5)}/>`;
+    return {
+      back: `<path d="M68,116 Q10,80 6,40 Q30,70 40,60 Q36,90 60,90 Q46,104 70,110 Z" fill="${c}" ${HL()}/><path d="M132,116 Q190,80 194,40 Q170,70 160,60 Q164,90 140,90 Q154,104 130,110 Z" fill="${c}" ${HL()}/>
+        <path d="M30,52 Q40,72 50,66 M170,52 Q160,72 150,66" fill="none" stroke="${y}" stroke-width="5" stroke-linecap="round"/>`,
+      head: flame(92, 42, -1) + flame(108, 42, 1) + flame(100, 40, 1) +
+        `<path d="M60,76 Q58,38 100,36 Q142,38 140,76 Q142,102 100,106 Q58,102 60,76 Z" fill="${c}" ${HL()}/><path d="M70,80 Q100,64 130,80 Q124,104 100,106 Q76,104 70,80 Z" fill="${l}"/>
+        ${heroEyes(80, 120, 64, { iris: '#c9101a' })}<path d="M88,76 Q100,68 112,76 Q112,92 100,100 Q104,86 92,86 Z" fill="${y}" ${HL(3.5)}/>`,
+    };
+  },
+  cerberus(c) {
+    const l = hshade(c, 0.35), red = '#e0423a';
+    const dog = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-30,-14 L-36,-44 L-12,-30 Z M30,-14 L36,-44 L12,-30 Z" fill="${c}" ${HL(4 / s)}/>
+      <path d="M-34,4 Q-36,-34 0,-36 Q36,-34 34,4 Q34,30 0,34 Q-34,30 -34,4 Z" fill="${c}" ${HL(4 / s)}/>
+      <path d="M-16,10 Q0,4 16,10 Q16,28 0,30 Q-16,28 -16,10 Z" fill="${l}" ${HL(3 / s)}/><ellipse cx="0" cy="12" rx="6" ry="4" fill="${HERO_LINE}"/>
+      <path d="M-20,-14 L-6,-6 M20,-14 L6,-6" ${HL(4 / s)}/><circle cx="-12" cy="-4" r="4" fill="${red}"/><circle cx="12" cy="-4" r="4" fill="${red}"/></g>`;
+    return {
+      back: `<path d="M126,164 Q166,172 176,140 Q180,128 190,126" fill="none" ${HL(12)}/><path d="M126,164 Q166,172 176,140 Q180,128 190,126" fill="none" stroke="${c}" stroke-width="6"/>`,
+      head: dog(56, 84, .62) + dog(144, 84, .62) + dog(100, 72, .95) + `<path d="M62,110 L138,110" stroke="${red}" stroke-width="8" stroke-linecap="round"/>${[0, 1, 2, 3, 4].map(k => `<path d="M${70 + k * 15},106 l4,-10 l4,10" fill="#dfe6ee" ${HL(2)}/>`).join('')}`,
+    };
+  },
+  kraken(c) {
+    const l = hshade(c, 0.4), d = hshade(c, -0.2);
+    const ten = (x0, y0, x1, y1, x2, y2) => `<path d="M${x0},${y0} Q${x1},${y1} ${x2},${y2}" fill="none" ${HL(16)}/><path d="M${x0},${y0} Q${x1},${y1} ${x2},${y2}" fill="none" stroke="${c}" stroke-width="10" stroke-linecap="round"/>`;
+    return {
+      back: ten(70, 150, 30, 150, 20, 120) + ten(130, 150, 172, 156, 184, 124) + ten(80, 160, 54, 186, 34, 178) + ten(120, 160, 150, 188, 172, 182),
+      head: `<path d="M56,84 Q50,10 100,8 Q150,10 144,84 Q142,104 100,108 Q58,104 56,84 Z" fill="${c}" ${HL()}/>
+        ${[[76, 30, 7], [124, 26, 6], [100, 18, 5], [86, 48, 4], [118, 46, 5]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${l}"/>`).join('')}
+        ${heroEyes(82, 118, 72, { iris: '#f2c230' })}<path d="M90,94 Q100,100 110,94" fill="none" ${HL(3.5)}/>`,
+    };
+  },
+  alien(c) {
+    const l = hshade(c, 0.4);
+    return {
+      head: `<path d="M80,30 L68,6 M120,30 L132,6" ${HL(3.5)}/><circle cx="68" cy="6" r="6" fill="#ff5ad0" ${HL(2.5)}/><circle cx="132" cy="6" r="6" fill="#ff5ad0" ${HL(2.5)}/>
+        <path d="M50,64 Q48,22 100,20 Q152,22 150,64 Q150,96 100,110 Q50,96 50,64 Z" fill="${c}" ${HL()}/>
+        <path d="M64,60 Q82,48 94,64 Q90,82 74,80 Q62,76 64,60 Z M136,60 Q118,48 106,64 Q110,82 126,80 Q138,76 136,60 Z" fill="#14121c" ${HL(3)}/>
+        <circle cx="78" cy="60" r="4" fill="#fff"/><circle cx="122" cy="60" r="4" fill="#fff"/><path d="M92,96 Q100,100 108,96" fill="none" ${HL(3)}/>
+        <ellipse cx="72" cy="38" rx="6" ry="3" fill="${l}"/>`,
+      suit: '#c9cfe0',
+    };
+  },
+  astro(c) {
+    return {
+      back: `<rect x="66" y="108" width="68" height="50" rx="10" fill="#9aa4b8" ${HL()}/>`,
+      head: `<circle cx="100" cy="68" r="46" fill="${c}" ${HL()}/><path d="M66,62 Q100,44 134,62 Q136,96 100,100 Q64,96 66,62 Z" fill="#1d2b4a" ${HL(3.5)}/>
+        <path d="M76,58 Q90,50 104,52" fill="none" stroke="#9ad6ff" stroke-width="5" stroke-linecap="round"/>
+        ${heroEyes(86, 114, 74, { glow: '#59f0ff', nobrow: true })}<circle cx="100" cy="24" r="6" fill="#e8473d" ${HL(2.5)}/>`,
+    };
+  },
+});
+const HERO_BELLY = { stego: 1, ptera: 1, spino: 1, oni: '#f2c230', phoenix: '#ffd23f', cerberus: 1, kraken: 1, alien: 1, scorpion: 1, dragon: 1, shark: '#f2f5f8', tiger: '#fff8ee', lion: '#fff4dc', trex: 1, wolf: '#f3f1ee', trike: 1, eagle: '#f6f3ea' };
 
+// キャラの なまえ(pal: 0〜3、3は ボス)
+function heroName(type, pal) { return (HERO_NAMES[type] || [])[pal || 0] || HERO_TYPES[type].name; }
+// ぜんぶの キャラ(しゅるい × 4色)
+function heroList() { return Object.keys(HERO_TYPES).flatMap(t => [0, 1, 2, 3].map(p => ({ id: 'hero_' + t + '_' + p, type: t, pal: p, boss: p === 3, name: heroName(t, p) }))); }
 let _heroUid = 0;
 function heroSVG(type, opt = {}) {
   const T = HERO_TYPES[type];
@@ -232,21 +484,30 @@ function heroSVG(type, opt = {}) {
   const h = HERO_HEADS[type](c);
   const belly = HERO_BELLY[type] === 1 ? hshade(c, 0.55) : HERO_BELLY[type];
   const boss = !!opt.boss, uid = 'h' + (++_heroUid);
-  let s = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${T.name}">`;
+  let s = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${heroName(type, opt.pal || 0)}">`;
   if (boss) s += `<defs><radialGradient id="${uid}"><stop offset="0" stop-color="#ffd23f" stop-opacity=".7"/><stop offset="1" stop-color="#ff5a3d" stop-opacity="0"/></radialGradient></defs><circle cx="100" cy="100" r="98" fill="url(#${uid})"/>`;
   s += `<ellipse cx="100" cy="190" rx="62" ry="7" fill="#000" opacity=".12"/>`;
   s += h.back || '';
-  if (type === 'robot') {
+  if (type === 'robot' || T.robo) {
     const d = hshade(c, -0.3);
     s += `<rect x="78" y="160" width="18" height="26" rx="4" fill="${d}" ${HL()}/><rect x="104" y="160" width="18" height="26" rx="4" fill="${d}" ${HL()}/>
       <rect x="64" y="106" width="72" height="58" rx="12" fill="${c}" ${HL()}/><rect x="84" y="118" width="32" height="22" rx="5" fill="#1d2433" ${HL(3)}/><circle cx="100" cy="129" r="6" fill="#59f0ff"/>
       <rect x="56" y="110" width="18" height="18" rx="6" fill="${d}" ${HL(3.5)}/><rect x="126" y="110" width="18" height="18" rx="6" fill="${d}" ${HL(3.5)}/>`;
-  } else s += heroBody(c, belly, { armor: boss ? '#c9cfd8' : opt.armor, belt: type === 'wolf' ? '#e0423a' : null });
+    if (h.treads) s += `<rect x="62" y="168" width="76" height="22" rx="11" fill="#3a3f30" ${HL()}/>${[0, 1, 2, 3, 4].map(k => `<circle cx="${74 + k * 13}" cy="179" r="5" fill="#6a705a" ${HL(2)}/>`).join('')}`;
+    if (boss) s += `<path d="M66,114 Q100,100 134,114 L132,130 Q100,140 68,130 Z" fill="#c9cfd8" ${HL(3.5)}/>`;
+  } else {
+    const bodyC = T.human ? c : (h.suit || c);
+    s += heroBody(bodyC, T.human ? null : belly, { armor: boss ? '#c9cfd8' : opt.armor, belt: type === 'wolf' || type === 'ninja' ? '#e0423a' : type === 'samurai' ? '#f2c230' : null });
+    if (h.tigerShorts) s += `<path d="M70,146 Q100,158 130,146 L128,164 L72,164 Z" fill="#f2c230" ${HL(3)}/>${[0, 1, 2, 3].map(k => `<path d="M${80 + k * 13},150 l4,12" ${HL(3)}/>`).join('')}`;
+  }
   if (!opt.noShield && (boss || opt.shield)) s += heroShield(hshade(c, -0.15));
-  s += heroArms(type === 'robot' ? hshade(c, -0.3) : c);
+  const armC = type === 'robot' || T.robo ? hshade(c, -0.3) : T.human ? c : (h.suit || c);
+  s += heroArms(armC);
   s += heroWeapon(opt.weapon || T.weapon, c);
   // 右手の こぶしを ぶきの うえに かさねる
-  s += `<circle cx="152" cy="140" r="9.5" fill="${type === 'robot' ? hshade(c, -0.3) : c}" ${HL(3.5)}/>`;
+  const fist = T.human ? (type === 'astro' ? '#dfe6ee' : SKIN) : armC;
+  s += `<circle cx="152" cy="140" r="9.5" fill="${fist}" ${HL(3.5)}/>`;
+  if (T.human) s += `<circle cx="50" cy="150" r="9" fill="${fist}" ${HL(3.5)}/>`;
   s += h.head;
   if (boss) s += `<path d="M76,26 L72,4 L88,16 L100,-2 L112,16 L128,4 L124,26 Q100,20 76,26 Z" fill="#ffd23f" stroke="#a67c00" stroke-width="3" stroke-linejoin="round" transform="translate(0 4)"/>`;
   return s + '</svg>';
