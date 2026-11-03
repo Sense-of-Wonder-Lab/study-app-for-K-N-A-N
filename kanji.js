@@ -47,7 +47,8 @@ function radSVG(name, cls) {
 /* ---------- パーツと くみたての じゅんび ---------- */
 let K_LEAVES = {}, K_ATOMIC = new Set(), K_RECIPE_KEY = {}, K_RECIPES = {};
 // べつの くみかたでも つくれる かんじ(森 = 木+林 でも 木+木+木 でも OK)
-const K_ALT_REC = { '森': [['木', '木', '木']] };
+// もともと 1つの パーツ あつかいの かんじも、くみあわせで つくれるように(大 = 一+人 など)
+const K_ALT_REC = { '森': [['木', '木', '木']], '大': [['一', '人']], '夫': [['二', '人']] };
 function kPrepare() {
   // それぞれの かんじに ひつような いちばん小さい パーツ(作った かんじも パーツに なる)
   const memo = {};
@@ -61,8 +62,10 @@ function kPrepare() {
   };
   Object.keys(KD.G).forEach(k => {
     K_LEAVES[k] = [...new Set(leaves(k))];
-    if (!KD.REC[k]) K_ATOMIC.add(k);
-    else {
+    if (!KD.REC[k]) {
+      K_ATOMIC.add(k);
+      if (K_ALT_REC[k]) { K_RECIPES[k] = K_ALT_REC[k]; K_RECIPE_KEY[k] = K_ALT_REC[k].map(r => r.slice().sort().join('')); }
+    } else {
       K_RECIPES[k] = [KD.REC[k]].concat(K_ALT_REC[k] || []);
       K_RECIPE_KEY[k] = K_RECIPES[k].map(r => r.slice().sort().join(''));
     }
