@@ -103,9 +103,9 @@ function kGive(parts) {
 RENDER['kanji'] = () => {
   loadKanji(() => {
     const p = profile(current);
-    if (!kGrade) kGrade = Math.min(6, Math.max(1, p.grade));
-    $('#k-grades').innerHTML = [1, 2, 3, 4, 5, 6].map(g => `<button data-g="${g}" class="${g === kGrade ? 'on' : ''}">${g}ねん</button>`).join('');
-    $$('#k-grades button').forEach(b => b.onclick = () => { sound.tap(); kGrade = Number(b.dataset.g); RENDER.kanji(); });
+    if (!kGrade) kGrade = p.klv || 1;
+    $('#k-grades').innerHTML = [1, 2, 3, 4, 5, 6].map(g => `<button data-g="${g}" class="${g === kGrade ? 'on' : ''}">レベル${g}</button>`).join('');
+    $$('#k-grades button').forEach(b => b.onclick = () => { sound.tap(); kGrade = Number(b.dataset.g); p.klv = kGrade; save(); RENDER.kanji(); });
     const box = $('#k-modes'); box.innerHTML = '';
     const best = (DB.krec[current] || {});
     K_MODES.forEach(m => {
@@ -123,7 +123,7 @@ RENDER['kanji'] = () => {
     const mk = kMakeable(current).length;
     $('#k-kobo-note').textContent = mk ? `いま つくれる かんじが ${mk}こ あるよ!` : 'パーツを くみあわせて かんじを つくろう';
     $('#k-kobo-btn').classList.toggle('glow', mk > 0);
-    $('#k-zukan-note').textContent = `${kGrade}ねん ${gg} / ${gn}・ぜんぶ ${Object.keys(got).length} / 1026`;
+    $('#k-zukan-note').textContent = `レベル${kGrade} ${gg} / ${gn}・ぜんぶ ${Object.keys(got).length} / 1026`;
   });
 };
 function kMixPool(g) { return ['1', '2', '3', '4', '5', '6', '7'].flatMap(t => (KD.QB[g][t] || []).map(q => Object.assign({ t }, q))); }
@@ -133,7 +133,7 @@ function startKanji(g, t) {
   const pool = t === 'mix' ? kMixPool(g) : KD.QB[g][t].map(q => Object.assign({ t }, q));
   const items = shuffle(pool).slice(0, SET_SIZE);
   game = { kind: 'kanji', grade: g, mode: t, items, i: 0, results: [], startAt: Date.now(), combo: 0 };
-  $('#kp-title').textContent = `${g}ねん・${K_MODES.find(m => m.t === t).name}`;
+  $('#kp-title').textContent = `レベル${g}・${K_MODES.find(m => m.t === t).name}`;
   go('kplay');
   showKanjiQ();
 }
@@ -219,7 +219,7 @@ function finishKanji() {
     (mk ? `<span class="badge best">🧩 つくれる かんじ ${mk}こ</span>` : '');
   $('#r-stars').textContent = '⭐'.repeat(stars(n)) + '☆'.repeat(3 - stars(n));
   $('#r-score').textContent = `1かいで せいかい ${n} / ${SET_SIZE}`;
-  $('#r-detail').textContent = `${game.grade}ねん・${K_MODES.find(m => m.t === game.mode).name}` + (kira ? '' : '・ノーミスで パーツが 1こ ふえるよ');
+  $('#r-detail').textContent = `レベル${game.grade}・${K_MODES.find(m => m.t === game.mode).name}` + (kira ? '' : '・ノーミスで パーツが 1こ ふえるよ');
   $('#r-best').textContent = n > prev && prev ? '🎉 じこベスト こうしん!' : prev ? `じこベスト ${prev}もん` : '';
   const w = $('#r-wear');
   if (mk) { w.style.display = ''; w.textContent = '🧩 くみたてる'; w.onclick = () => { sound.tap(); go('kobo'); }; }
@@ -273,11 +273,11 @@ $('#kb-make').onclick = () => {
 RENDER['kzukan'] = () => {
   loadKanji(() => {
     const p = profile(current);
-    if (!kZukanGrade) kZukanGrade = kGrade || Math.min(6, Math.max(1, p.grade));
+    if (!kZukanGrade) kZukanGrade = kGrade || p.klv || 1;
     const got = kanjiOf(current);
     $('#kz-grades').innerHTML = [1, 2, 3, 4, 5, 6].map(g => {
       const all = Object.keys(KD.G).filter(k => KD.G[k] === g);
-      return `<button data-g="${g}" class="${g === kZukanGrade ? 'on' : ''}">${g}ねん<small>${all.filter(k => got[k]).length}/${all.length}</small></button>`;
+      return `<button data-g="${g}" class="${g === kZukanGrade ? 'on' : ''}">レベル${g}<small>${all.filter(k => got[k]).length}/${all.length}</small></button>`;
     }).join('');
     $$('#kz-grades button').forEach(b => b.onclick = () => { sound.tap(); kZukanGrade = Number(b.dataset.g); RENDER.kzukan(); });
     const ks = Object.keys(KD.G).filter(k => KD.G[k] === kZukanGrade).sort((a, b) => KD.SC[a] - KD.SC[b] || a.localeCompare(b));
@@ -290,7 +290,7 @@ function openKanjiCard(k, title) {
   const rn = KD.RN[k];
   const ex = (KD.EX[k] || []).map(([w, r]) => `<li>${esc(w)}<small>${esc(r)}</small></li>`).join('');
   $('#zk-box').innerHTML = `${title ? `<p class="kc-title">${title}</p>` : ''}<div class="kc-glyph">${kanjiSVG(k)}</div>
-    <p>${KD.G[k]}ねんせいの かんじ・${KD.SC[k]}かく</p>
+    <p>レベル${KD.G[k]}の かんじ・${KD.SC[k]}かく</p>
     ${rn ? `<p class="kc-rad">${radSVG(rn)}<span>ぶしゅ: ${esc(rn)}</span></p>` : ''}
     ${ex ? `<ul class="kc-ex">${ex}</ul>` : ''}
     <div class="btnrow" style="margin-top:12px"><button class="btn" id="zk-close">とじる</button></div>`;

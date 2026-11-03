@@ -29,15 +29,37 @@ function clockSVG(h, m) {
   s += `<line x1="100" y1="100" x2="${100 + 72 * Math.sin(ma)}" y2="${100 - 72 * Math.cos(ma)}" stroke="#2f6fd6" stroke-width="5" stroke-linecap="round"/>`;
   return s + '<circle cx="100" cy="100" r="7" fill="#3b2f2a"/></svg>';
 }
+// 三角形(底辺と 高さ に 目もり つき)
+function triSVG(b, h, apex, ask) {
+  // b,h: cm。apex: 頂点の よこ位置(底辺の 左はしからの cm、はみ出すことも ある)
+  const W = 260, H = 180, padX = 46, pad = 28;
+  const span = Math.max(b, apex) - Math.min(0, apex);
+  const u = Math.min((W - padX * 2) / span, (H - pad * 2) / h);
+  const x0 = padX + (W - padX * 2 - span * u) / 2 + (Math.min(0, apex) < 0 ? -apex * u : 0), y0 = H - pad;
+  const bx = x0 + b * u, ax = x0 + apex * u, ay = y0 - h * u;
+  const L = 'stroke="#3b2f2a" stroke-width="3" stroke-linejoin="round"';
+  let s = `<svg viewBox="0 0 ${W} ${H}" class="tri"><polygon points="${x0},${y0} ${bx},${y0} ${ax},${ay}" fill="#ffe9b3" ${L}/>`;
+  // 頂点が 底辺の 外に あるときは 底辺を のばした 点線
+  if (apex < 0) s += `<line x1="${ax}" y1="${y0}" x2="${x0}" y2="${y0}" stroke="#3b2f2a" stroke-width="2" stroke-dasharray="5 4"/>`;
+  if (apex > b) s += `<line x1="${bx}" y1="${y0}" x2="${ax}" y2="${y0}" stroke="#3b2f2a" stroke-width="2" stroke-dasharray="5 4"/>`;
+  s += `<line x1="${ax}" y1="${ay}" x2="${ax}" y2="${y0}" stroke="#e8553d" stroke-width="2.5" stroke-dasharray="6 4"/>`;
+  const sd = apex <= 0 ? 1 : apex >= b ? -1 : (apex < b / 2 ? 1 : -1);  // 直角の しるしは 三角形の 内がわ
+  s += `<polyline points="${ax + 9 * sd},${y0} ${ax + 9 * sd},${y0 - 9} ${ax},${y0 - 9}" fill="none" stroke="#e8553d" stroke-width="2"/>`;
+  const tx = (x, y, t, c) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="17" font-weight="800" fill="${c}" stroke="#fff" stroke-width="4" paint-order="stroke" font-family="sans-serif">${t}</text>`;
+  s += tx((x0 + bx) / 2, y0 + 20, ask === 'b' ? '?cm' : b + 'cm', '#3b2f2a');
+  const hx = ax - sd * 28;  // 高さの 線の、直角の しるしと はんたい がわ
+  s += tx(hx, (ay + y0) / 2 + 6, ask === 'h' ? '?cm' : h + 'cm', '#e8553d');
+  return s + '</svg>';
+}
 const kuku = dans => () => { const a = pick(dans), b = rnd(1, 9); return [`${a} × ${b}`, a * b]; };
 
 const CALC_LEVELS = [
   /* ---------- 1年 ---------- */
-  { id: 'g1L1a', grade: 1, grades: [1, 4], emoji: '🚀', name: 'レベル1 くりあがり', note: '9 + 5 など(こたえ 10〜18)', gen() {
+  { id: 'g1L1a', grade: 1, emoji: '🚀', name: 'レベル1 くりあがり', note: '9 + 5 など(こたえ 10〜18)', gen() {
       const a = rnd(1, 9), b = rnd(10 - a, 9); return [`${a} + ${b}`, a + b]; } },
-  { id: 'g1L1b', grade: 1, grades: [1, 4], emoji: '🌈', name: 'レベル1 くりさがり', note: '13 − 6 など(こたえ 2〜9)', gen() {
+  { id: 'g1L1b', grade: 1, emoji: '🌈', name: 'レベル1 くりさがり', note: '13 − 6 など(こたえ 2〜9)', gen() {
       const a = rnd(10, 18), b = rnd(Math.max(a % 10 + 1, a - 9), Math.min(9, a - 2)); return [`${a} − ${b}`, a - b]; } },
-  { id: 'g1L2a', grade: 1, grades: [1, 4], emoji: '🦖', name: 'レベル2 たしざん', note: '2けた 38 + 27 など', gen() {
+  { id: 'g1L2a', grade: 1, emoji: '🦖', name: 'レベル2 たしざん', note: '2けた 38 + 27 など', gen() {
       const carry = Math.random() < 0.7;
       for (;;) {
         const a = rnd(10, 98), b = Math.random() < 0.4 ? rnd(1, 9) : rnd(10, 89);
@@ -45,7 +67,7 @@ const CALC_LEVELS = [
         if ((a % 10 + b % 10 >= 10) !== carry) continue;
         return Math.random() < 0.3 && b < 10 ? [`${b} + ${a}`, a + b] : [`${a} + ${b}`, a + b];
       } } },
-  { id: 'g1L2b', grade: 1, grades: [1, 4], emoji: '🐲', name: 'レベル2 ひきざん', note: '2けた 52 − 19 など', gen() {
+  { id: 'g1L2b', grade: 1, emoji: '🐲', name: 'レベル2 ひきざん', note: '2けた 52 − 19 など', gen() {
       const borrow = Math.random() < 0.7;
       for (;;) {
         const a = rnd(11, 99), b = Math.random() < 0.4 ? rnd(1, 9) : rnd(10, 97);
@@ -75,11 +97,11 @@ const CALC_LEVELS = [
   { id: 'g2c', grade: 2, emoji: '🧮', name: '3けたの たしざん・ひきざん', note: '125 + 38、342 − 17 など', gen() {
       if (Math.random() < 0.5) { for (;;) { const a = rnd(100, 899), b = rnd(10, 99); if (a + b <= 999) return [`${a} + ${b}`, a + b]; } }
       for (;;) { const a = rnd(110, 999), b = rnd(10, 99); if (a - b >= 100) return [`${a} − ${b}`, a - b]; } } },
-  { id: 'g2k1', grade: 2, grades: [1, 2], emoji: '🖐️', name: '九九 2・5のだん', note: '2のだん と 5のだん', gen: kuku([2, 5]) },
-  { id: 'g2k2', grade: 2, grades: [1, 2], emoji: '🍀', name: '九九 3・4のだん', note: '3のだん と 4のだん', gen: kuku([3, 4]) },
-  { id: 'g2k3', grade: 2, grades: [1, 2], emoji: '🌟', name: '九九 6・7のだん', note: '6のだん と 7のだん', gen: kuku([6, 7]) },
-  { id: 'g2k4', grade: 2, grades: [1, 2], emoji: '🔥', name: '九九 8・9・1のだん', note: '8・9・1のだん', gen: kuku([8, 9, 1]) },
-  { id: 'c5', grade: 2, grades: [1, 2, 3, 4], emoji: '⭐', name: '九九 ぜんぶ', note: '2〜9のだん', gen: kuku([2, 3, 4, 5, 6, 7, 8, 9]) },
+  { id: 'g2k1', grade: 2, emoji: '🖐️', name: '九九 2・5のだん', note: '2のだん と 5のだん', gen: kuku([2, 5]) },
+  { id: 'g2k2', grade: 2, emoji: '🍀', name: '九九 3・4のだん', note: '3のだん と 4のだん', gen: kuku([3, 4]) },
+  { id: 'g2k3', grade: 2, emoji: '🌟', name: '九九 6・7のだん', note: '6のだん と 7のだん', gen: kuku([6, 7]) },
+  { id: 'g2k4', grade: 2, emoji: '🔥', name: '九九 8・9・1のだん', note: '8・9・1のだん', gen: kuku([8, 9, 1]) },
+  { id: 'c5', grade: 2, emoji: '⭐', name: '九九 ぜんぶ', note: '2〜9のだん', gen: kuku([2, 3, 4, 5, 6, 7, 8, 9]) },
   { id: 'g2e', grade: 2, emoji: '❓', name: '九九 あなあき', note: '□ × 6 = 42', gen() {
       const a = rnd(2, 9), b = rnd(1, 9);
       return Math.random() < 0.5 ? Q('', `${a} × {0} = ${a * b}`, [b]) : Q('', `{0} × ${b} = ${a * b}`, [a]); } },
@@ -185,6 +207,20 @@ const CALC_LEVELS = [
       if (t === 0) { const a = rnd(2, 9), b = rnd(2, 9); return Q(`たて ${a}cm、よこ ${b}cm の 長方形の 面積は?`, '{0} cm²', [a * b]); }
       if (t === 1) { const a = rnd(2, 9); return Q(`1辺が ${a}cm の 正方形の 面積は?`, '{0} cm²', [a * a]); }
       const a = rnd(2, 9), b = rnd(2, 9); return Q(`面積 ${a * b}cm²、たて ${a}cm の 長方形。よこは?`, '{0} cm', [b]); } },
+  /* ---------- 5年 ---------- */
+  { id: 'g5a', grade: 5, emoji: '🔺', name: '三角形の 面積', note: '底辺 × 高さ ÷ 2', gen() {
+      for (;;) {
+        const b = rnd(3, 14), h = rnd(2, 12);
+        if ((b * h) % 2) continue;  // こたえが 整数に なるように
+        if (h / b > 2 || b / h > 3) continue;  // ほそすぎる 形は かかない
+        // 頂点の 位置: ふつう・直角・底辺の 外(高さが 三角形の 外に でる)
+        const t = rnd(0, 6), apex = t <= 3 ? rnd(1, b - 1) : t === 4 ? 0 : t === 5 ? b : (Math.random() < .5 ? -rnd(1, 3) : b + rnd(1, 3));
+        if (b < 2 && t <= 2) continue;
+        const area = b * h / 2, k = rnd(0, 4);
+        if (k <= 2) return Q('この 三角形の 面積は?', '{0} cm²', [area], { img: triSVG(b, h, apex) });
+        if (k === 3) return Q(`面積が ${area}cm² の 三角形。高さは?`, '{0} cm', [h], { img: triSVG(b, h, apex, 'h') });
+        return Q(`面積が ${area}cm² の 三角形。底辺は?`, '{0} cm', [b], { img: triSVG(b, h, apex, 'b') });
+      } } },
   { id: 'c10', grade: 4, emoji: '👑', name: '4年 ミックス', note: '4年の けいさん ぜんぶ', dec: true, gen() {
       return pick(CALC_LEVELS.filter(l => l.grade === 4 && l.id !== 'c10' && l.id !== 'g4d')).gen(); } },
 ];
@@ -192,8 +228,10 @@ const CALC_LEVELS = [
 const ALL_CALC_LEVELS = CALC_LEVELS.slice();
 const ACTIVE_CALC_LEVEL_IDS = new Set([
   'g1L1a', 'g1L1b', 'g1L2a', 'g1L2b',
-  'c6', 'g3d', 'g3e', 'g3f', 'g3g', 'g3h',
+  'g2k1', 'g2k2', 'g2k3', 'g2k4', 'c5', 'g2e',   // レベル2: 九九
+  'c8', 'c6', 'g3d', 'g3e', 'g3f', 'g3g', 'g3h', // レベル3: 2けた×1けた ほか
   'g4d', 'g4e',
+  'g5a',                                          // レベル5: 三角形の 面積
 ]);
 CALC_LEVELS.splice(0, CALC_LEVELS.length, ...CALC_LEVELS.filter(l => ACTIVE_CALC_LEVEL_IDS.has(l.id)));
 

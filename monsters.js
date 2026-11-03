@@ -39,6 +39,7 @@ const MONSTER_SETS = {
   g4c: { hue: 170, names: ['テンバイ', 'コテンコ', 'ショウカケ', 'デシマルドラゴン'] },
   g4d: { hue: 320, names: ['カブンスー', 'タイブン', 'マゼマゼ', 'ブンスウマジン'] },
   g4e: { hue: 130, names: ['シカクイ', 'ヒロビロ', 'メンセキー', 'テリトリオン'] },
+  g5a: { hue: 45, names: ['サンカクン', 'テイヘン', 'タカサー', 'トライアングロン'] },
   q1: { hue: 95, names: ['クサモチ', 'ハッパン', 'ツボミン', 'モリノヌシ'] },
   q2: { hue: 160, names: ['カゼノコ', 'クルリン', 'ヒュルル', 'タイフーン'] },
   q3: { hue: 25, names: ['シロボン', 'カブトン', 'ノボリン', 'オシロダイショウ'] },
@@ -50,8 +51,9 @@ Object.entries(MONSTER_SETS).forEach(([level, set]) => {
 });
 const ACTIVE_MONSTER_LEVEL_IDS = new Set([
   'g1L1a', 'g1L1b', 'g1L2a', 'g1L2b',
-  'c6', 'g3d', 'g3e', 'g3f', 'g3g', 'g3h',
-  'g4d', 'g4e', 'q1', 'q2', 'q3', 'q4',
+  'g2k1', 'g2k2', 'g2k3', 'g2k4', 'c5', 'g2e',
+  'c8', 'c6', 'g3d', 'g3e', 'g3f', 'g3g', 'g3h',
+  'g4d', 'g4e', 'g5a', 'q1', 'q2', 'q3', 'q4',
 ]);
 MONSTERS.splice(0, MONSTERS.length, ...MONSTERS.filter(m => ACTIVE_MONSTER_LEVEL_IDS.has(m.level)));
 

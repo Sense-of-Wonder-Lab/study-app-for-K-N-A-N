@@ -49,7 +49,7 @@ const DU_LEVEL_MAP = {
   q3:    [['hair','long','silver'],['top','cami','mint'],['shoes','sneaker','navy'],['acc','tiara','gold']],
   q4:    [['hair','wave','pinkh'],['top','knit','red'],['bottom','pleats','lemon'],['bg','hearts','sakura']],
 };
-const DU_LEVELS = Object.keys(DU_LEVEL_MAP);
+
 const DU_ITEMS = [];
 const DU_RESERVE_DESIGNS = [
   ['hair','long','violet'], ['hair','pony','red'], ['hair','twin','pinkh'],
@@ -66,6 +66,40 @@ const DU_STARTER = {
   bottom: { id: 's_bottom', cat: 'bottom', shape: 'skirt', color: 'sky', name: 'みずいろの スカート', starter: true },
   shoes: { id: 's_shoes', cat: 'shoes', shape: 'strap', color: 'pink', name: 'ピンクの ストラップシューズ', starter: true },
 };
+// あとから ふえた レベルの ごほうび: 予備の デザインを 先に つかい、たりない ぶんは まだ つかっていない 色と 形の くみあわせから
+(function addLevels(ids) {
+  const used = new Set(Object.values(DU_LEVEL_MAP).flat().map(x => x.join()));
+  ['hair,long,brown', 'top,tee,white', 'bottom,skirt,sky', 'shoes,strap,pink'].forEach(x => used.add(x));
+  // 予備デザインを しゅるいが まざるように ならべかえ
+  const byCat = {}; DU_RESERVE_DESIGNS.filter(x => !used.has(x.join())).forEach(x => (byCat[x[0]] = byCat[x[0]] || []).push(x));
+  const reserve = [];
+  for (let k = 0; Object.values(byCat).some(v => v.length); k++) Object.values(byCat).forEach(v => { if (v.length) reserve.push(v.shift()); });
+  const SPECIAL = [['dress', 'princess'], ['acc', 'crown'], ['acc', 'tiara'], ['bg', 'castle'], ['hand', 'wand'], ['dress', 'frill']];
+  const CATS = ['top', 'bottom', 'hair', 'shoes', 'acc', 'hand', 'dress', 'bg'];
+  let ci = 0;
+  const fresh = (cat, shape) => {
+    const pal = Object.keys(cat === 'hair' ? DU_HAIR : DU_COLORS);
+    const shapes = shape ? [shape] : Object.keys(DU_SHAPES[cat]).filter(sh => !SPECIAL.some(([c, s2]) => c === cat && s2 === sh));
+    for (let k = 0; k < 200; k++) {
+      const x = [cat, shapes[(k * 7 + ci) % shapes.length], pal[(k * 5 + ci * 3) % pal.length]];
+      if (!used.has(x.join())) { used.add(x.join()); return x; }
+    }
+    throw new Error('no design left for ' + cat);
+  };
+  ids.forEach((id, li) => {
+    if (DU_LEVEL_MAP[id]) return;
+    const set = [];
+    while (set.length < 3) {
+      const r = reserve.shift();
+      if (r) { used.add(r.join()); set.push(r); continue; }
+      set.push(fresh(CATS[ci++ % CATS.length]));
+    }
+    const [sc, ss] = SPECIAL[li % SPECIAL.length];
+    set.push(fresh(sc, ss));
+    DU_LEVEL_MAP[id] = set;
+  });
+})(['g2k1', 'g2k2', 'g2k3', 'g2k4', 'c5', 'g2e', 'c8', 'g5a']);
+const DU_LEVELS = Object.keys(DU_LEVEL_MAP);
 (function makeItems() {
   const assigned = new Set(Object.values(DU_STARTER).map(s => s.cat + s.shape + s.color));
   Object.entries(DU_LEVEL_MAP).forEach(([level, designs]) => {

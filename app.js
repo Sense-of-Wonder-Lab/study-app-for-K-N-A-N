@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '5.1.0';
+const APP_VERSION = '6.0.0';
 const STORE_KEY = 'manabi_v2'; // 5.0.0: 着せ替え・出題構成の刷新に伴い新しい保存領域を使う
 
 /* ========== テーマ(子どもごとの見た目) ========== */
@@ -23,10 +23,7 @@ const AVATARS = ['🐱', '🐶', '🐰', '🐻', '🐼', '🦊', '🐸', '🐧']
 function defaultData() {
   return {
     pin: null,
-    profiles: [
-      { id: 'p1', name: '1ねんせい', grade: 1, limitMin: 30, avatar: 0, theme: 'sora', title: 'けいさん ロケット', style: 'monster' },
-      { id: 'p2', name: '4ねんせい', grade: 4, limitMin: 30, avatar: 1, theme: 'sakura', title: 'マジカル けいさん', style: 'dressup' },
-    ],
+    profiles: [],
     usage: {},   // { profileId: { date, sec, bonusSec } }
     records: {}, // { profileId: { levelId: { best, time } } }
     zukan: {},   // { profileId: { monsterId: { n, kira, first } } }
@@ -42,7 +39,10 @@ function load() {
   catch (e) { DB = defaultData(); }
   // 古いバージョンのデータに足りない項目を補う
   DB.zukan = DB.zukan || {}; DB.ta = DB.ta || {}; DB.closet = DB.closet || {}; DB.outfit = DB.outfit || {}; DB.kparts = DB.kparts || {}; DB.kanji = DB.kanji || {}; DB.krec = DB.krec || {}; DB.records = DB.records || {}; DB.usage = DB.usage || {};
-  DB.profiles.forEach((p, i) => { if (!p.theme) p.theme = ['sora', 'sakura', 'mori', 'yume'][i % 4]; if (p.title === undefined) p.title = ''; if (!p.style) p.style = p.id === 'p2' ? 'dressup' : 'monster'; });
+  DB.profiles.forEach((p, i) => { if (!p.theme) p.theme = ['sora', 'sakura', 'mori', 'yume'][i % 4]; if (p.title === undefined) p.title = ''; if (!p.style) p.style = p.id === 'p2' ? 'dressup' : 'monster';
+    if (!p.lv) p.lv = Math.min(6, Math.max(1, p.grade || 1));
+    if (!p.klv) p.klv = p.lv;
+    if (p.bday === undefined) p.bday = ''; });
 }
 function save() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) {}
@@ -190,28 +190,65 @@ const TA_SEC = 60;
 let showAllCalc = false;
 let calcMode = 'battle';
 const RENDER = {};
+/* ---------- ログイン(なまえ + たんじょうび 4けた) ---------- */
+// なまえは 全角・半角や カタカナ・ひらがなの ちがいを きにしない
+function normName(s) {
+  return String(s || '').normalize('NFKC').trim().replace(/\s+/g, '').replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+}
+function okBday(b) { if (!/^\d{4}$/.test(b)) return false; const m = +b.slice(0, 2), d = +b.slice(2); return m >= 1 && m <= 12 && d >= 1 && d <= [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1]; }
+function findAccount(name, bday) { return DB.profiles.find(p => p.bday && p.bday === bday && normName(p.name) === normName(name)); }
+function loginAs(p) {
+  sound.tap();
+  current = p.id; warned = remainSec(p) <= 60;
+  try { localStorage.setItem(STORE_KEY + '_last', p.name); } catch (e) {}
+  applyTheme(p);
+  go(remainSec(p) <= 0 ? 'timeup' : 'home');
+}
 RENDER.profiles = () => {
   current = null;
   applyTheme(null);
-  const box = $('#profile-list');
-  box.innerHTML = '';
-  DB.profiles.forEach(p => {
-    const r = remainSec(p);
-    const t = THEMES[p.theme] || THEMES.ohisama;
-    const b = document.createElement('button');
-    b.className = 'big' + (r <= 0 ? ' locked' : '');
-    b.style.borderTop = `10px solid ${t.accent}`;
-    const face = p.style === 'dressup' ? `<span class="pface">${charSVG(outfitOf(p.id), { viewBox: '62 0 176 196', noBg: true })}</span>` : `<span class="emoji">${AVATARS[p.avatar % AVATARS.length]}</span>`;
-    b.innerHTML = `${face}${esc(p.name)}<span class="note">${r <= 0 ? 'きょうは おしまい' : 'のこり ' + fmt(r)}</span>`;
-    b.onclick = () => {
-      sound.tap();
-      current = p.id; warned = remainSec(p) <= 60;
-      applyTheme(p);
-      go(r <= 0 ? 'timeup' : 'home');
-    };
-    box.appendChild(b);
-  });
+  let last = ''; try { last = localStorage.getItem(STORE_KEY + '_last') || ''; } catch (e) {}
+  if (!$('#lg-name').value) $('#lg-name').value = last;
+  $('#lg-bday').value = '';
+  $('#lg-msg').textContent = '';
+  const nob = DB.profiles.filter(p => !p.bday);
+  $('#lg-nobday').innerHTML = nob.length ? `⚙️ ほごしゃ せっていで「${nob.map(p => esc(p.name)).join('」「')}」の たんじょうびを とうろくしてね` : '';
+  $('#lg-first').style.display = DB.profiles.length ? 'none' : '';
 };
+$('#lg-go').onclick = () => {
+  const name = $('#lg-name').value, b = $('#lg-bday').value.normalize('NFKC');
+  const p = findAccount(name, b);
+  if (!p) { sound.ng(); replay($('#lg-box'), 'shake'); $('#lg-msg').textContent = 'なまえか たんじょうびが ちがうよ'; return; }
+  loginAs(p);
+};
+$('#lg-bday').addEventListener('keydown', e => { if (e.key === 'Enter') $('#lg-go').click(); });
+
+/* ---------- アカウント とうろく ---------- */
+let regStyle = 'monster';
+RENDER.register = () => {
+  current = null; applyTheme(null);
+  ['rg-name', 'rg-bday', 'rg-pin'].forEach(id => $('#' + id).value = '');
+  $('#rg-pinrow').style.display = DB.pin ? '' : 'none';
+  $('#rg-msg').textContent = '';
+  regStyle = 'monster';
+  $$('#rg-style button').forEach(b => b.classList.toggle('on', b.dataset.style === regStyle));
+};
+$$('#rg-style button').forEach(b => b.onclick = () => { sound.tap(); regStyle = b.dataset.style; $$('#rg-style button').forEach(x => x.classList.toggle('on', x === b)); });
+$('#rg-go').onclick = () => {
+  const name = $('#rg-name').value.normalize('NFKC').trim(), b = $('#rg-bday').value.normalize('NFKC');
+  const msg = t => { sound.ng(); $('#rg-msg').textContent = t; };
+  if (!name) return msg('なまえを いれてね');
+  if (!okBday(b)) return msg('たんじょうびは 4けたで いれてね(5がつ3にち なら 0503)');
+  // 新しい アカウントで じかんせいげんを のがれられないように、暗証番号が あれば たしかめる
+  if (DB.pin && $('#rg-pin').value.normalize('NFKC') !== DB.pin) return msg('ほごしゃの あんしょうばんごうが ちがいます');
+  if (DB.profiles.some(p => normName(p.name) === normName(name))) return msg('その なまえは もう つかわれているよ');
+  const id = 'p' + Date.now().toString(36);
+  const p = { id, name, bday: b, grade: 1, lv: 1, klv: 1, limitMin: 30, avatar: DB.profiles.length % AVATARS.length,
+    theme: regStyle === 'dressup' ? 'sakura' : 'sora', title: '', style: regStyle };
+  DB.profiles.push(p); save();
+  loginAs(p);
+};
+
 RENDER.home = () => {
   const p = profile(current);
   applyTheme(p);
@@ -251,34 +288,24 @@ RENDER['calc-menu'] = () => {
   const p = profile(current);
   const box = $('#calc-levels'); box.innerHTML = '';
   $$('#mode-seg button').forEach(b => b.classList.toggle('on', b.dataset.mode === calcMode));
-  // 基本は「その学年 と 1つ下の学年(ふくしゅう)」。九九など grades がある ものは そこに出す
-  const shows = l => showAllCalc || (l.grades ? l.grades.includes(p.grade) : (l.grade === p.grade || l.grade === p.grade - 1));
+  $('#calc-lvtabs').innerHTML = [1, 2, 3, 4, 5, 6].map(g => `<button data-g="${g}" class="${g === p.lv ? 'on' : ''}">レベル${g}</button>`).join('');
+  $$('#calc-lvtabs button').forEach(b => b.onclick = () => { sound.tap(); p.lv = Number(b.dataset.g); save(); RENDER['calc-menu'](); });
   const ta = DB.ta[current] || {};
-  const grades = [...new Set(CALC_LEVELS.map(l => l.grade))].sort((x, y) => gkey(x) - gkey(y));
-  function gkey(g) { return g === p.grade ? 0 : g < p.grade ? p.grade - g : 10 + g - p.grade; } // じぶん → ふくしゅう(ちかい順) → さきどり
-  grades.forEach(g => {
-    const list = CALC_LEVELS.filter(l => l.grade === g && shows(l));
-    if (!list.length) return;
-    const h = document.createElement('h3');
-    h.className = 'ghead';
-    h.textContent = `${g}ねんせい` + (g < p.grade ? '(ふくしゅう)' : g > p.grade ? '(さきどり)' : '');
-    box.appendChild(h);
-    list.forEach(l => {
-      const b = levelButton(l, () => calcMode === 'ta' ? startTA(l) : startCalc(l));
-      if (calcMode === 'ta') b.insertAdjacentHTML('beforeend', `<span class="best">${ta[l.id] ? '🏆 ベスト ' + ta[l.id] + 'もん' : 'まだ きろく なし'}</span>`);
-      else b.insertAdjacentHTML('beforeend', `<span class="mini">${miniMonsters(l.id)}</span>`);
-      box.appendChild(b);
-    });
+  const list = CALC_LEVELS.filter(l => l.grade === p.lv);
+  if (!list.length) box.innerHTML = '<p class="sub" style="grid-column:1/-1;padding:30px 0">レベル' + p.lv + 'の もんだいは じゅんびちゅう だよ</p>';
+  list.forEach(l => {
+    const b = levelButton(l, () => calcMode === 'ta' ? startTA(l) : startCalc(l));
+    if (calcMode === 'ta') b.insertAdjacentHTML('beforeend', `<span class="best">${ta[l.id] ? '🏆 ベスト ' + ta[l.id] + 'もん' : 'まだ きろく なし'}</span>`);
+    else b.insertAdjacentHTML('beforeend', `<span class="mini">${miniMonsters(l.id)}</span>`);
+    box.appendChild(b);
   });
-  $('#calc-all').textContent = showAllCalc ? 'じぶんの がくねんだけ みる' : 'ほかの がくねんの もんだいも みる';
 };
-$('#calc-all').onclick = () => { showAllCalc = !showAllCalc; RENDER['calc-menu'](); };
 $$('#mode-seg button').forEach(b => b.onclick = () => { sound.tap(); calcMode = b.dataset.mode; RENDER['calc-menu'](); });
 RENDER['pref-menu'] = () => {
   const p = profile(current);
   const box = $('#pref-levels'); box.innerHTML = '';
   PREF_LEVELS.forEach(l => {
-    const b = levelButton(l, () => startPref(l), p.grade < l.minGrade ? '(むずかしいよ)' : '');
+    const b = levelButton(l, () => startPref(l));
     b.insertAdjacentHTML('beforeend', `<span class="mini">${miniMonsters(l.id)}</span>`);
     box.appendChild(b);
   });
@@ -589,7 +616,7 @@ function finishTA() {
 function prefLabel(pr, withYomi) { return withYomi ? `${pr[0]}<small>${pr[1]}</small>` : pr[0]; }
 function startPref(level) {
   const p = profile(current);
-  const yomi = p.grade <= 3; // 低・中学年はふりがな付き
+  const yomi = true; // ふりがなは いつも つける
   let pool = shuffle(PREFS);
   if (level.id === 'q3' || level.id === 'q4') {
     // 県名と県庁所在地名がちがう県を多めに
@@ -810,8 +837,10 @@ RENDER.parent = () => {
     return `<div class="panel" data-pid="${p.id}" style="border-top:8px solid ${(THEMES[p.theme] || THEMES.ohisama).accent}">
       <div class="row"><span style="font-size:36px">${AVATARS[p.avatar % AVATARS.length]}</span>
         <input type="text" class="f-name" value="${esc(p.name)}" maxlength="10">
-        <select class="f-grade">${[1, 2, 3, 4, 5, 6].map(g => `<option value="${g}" ${g === p.grade ? 'selected' : ''}>小${g}</option>`).join('')}</select>
         <button class="sbtn f-avatar">アイコン変更</button></div>
+      <div class="row">たんじょうび(4けた)
+        <input type="text" class="f-bday" inputmode="numeric" maxlength="4" value="${esc(p.bday || '')}" placeholder="0503" style="width:5em">
+        ${p.bday ? '' : '<b style="color:#c03030">未登録(ログインできません)</b>'}</div>
       <div class="row">あそびかた
         <select class="f-style"><option value="monster" ${p.style !== 'dressup' ? 'selected' : ''}>かいじゅうバトル</option><option value="dressup" ${p.style === 'dressup' ? 'selected' : ''}>きせかえ</option></select></div>
       <div class="row">テーマ
@@ -824,7 +853,7 @@ RENDER.parent = () => {
       <div class="row">
         <button class="sbtn primary f-ext">今日だけ +10分</button>
         <button class="sbtn f-reset">今日の使用時間を0に</button>
-        ${DB.profiles.length > 1 ? '<button class="sbtn danger f-del">この子を削除</button>' : ''}
+        <button class="sbtn danger f-del">この子を削除</button>
       </div>
     </div>`;
   }).join('') + `
@@ -838,8 +867,17 @@ RENDER.parent = () => {
     </div>`;
   body.querySelectorAll('.panel[data-pid]').forEach(el => {
     const p = profile(el.dataset.pid);
-    el.querySelector('.f-name').onchange = e => { p.name = e.target.value.trim() || p.name; save(); };
-    el.querySelector('.f-grade').onchange = e => { p.grade = Number(e.target.value); save(); };
+    el.querySelector('.f-name').onchange = e => {
+      const n = e.target.value.normalize('NFKC').trim();
+      if (!n || DB.profiles.some(x => x !== p && normName(x.name) === normName(n))) { alert('名前が空か、ほかの人と同じです'); e.target.value = p.name; return; }
+      p.name = n; save();
+    };
+    el.querySelector('.f-bday').onchange = e => {
+      const b = e.target.value.normalize('NFKC');
+      if (!okBday(b)) { alert('4けたの 月日で 入力してください(5月3日 → 0503)'); e.target.value = p.bday || ''; return; }
+      if (DB.profiles.some(x => x !== p && x.bday === b && normName(x.name) === normName(p.name))) { alert('同じ名前・誕生日の人がいます'); return; }
+      p.bday = b; save(); RENDER.parent();
+    };
     el.querySelector('.f-style').onchange = e => { p.style = e.target.value; save(); RENDER.parent(); };
     el.querySelector('.f-theme').onchange = e => { p.theme = e.target.value; save(); RENDER.parent(); };
     el.querySelector('.f-title').onchange = e => { p.title = e.target.value.trim(); save(); };
@@ -857,7 +895,9 @@ RENDER.parent = () => {
   });
   $('#f-add').onclick = () => {
     const id = 'p' + Date.now().toString(36);
-    DB.profiles.push({ id, name: 'あたらしい子', grade: 1, limitMin: 30, avatar: DB.profiles.length % AVATARS.length, theme: 'mori', title: '', style: 'monster' });
+    let n = 'あたらしい子', k = 2;
+    while (DB.profiles.some(x => normName(x.name) === normName(n))) n = 'あたらしい子' + k++;
+    DB.profiles.push({ id, name: n, bday: '', grade: 1, lv: 1, klv: 1, limitMin: 30, avatar: DB.profiles.length % AVATARS.length, theme: 'mori', title: '', style: 'monster' });
     save(); RENDER.parent();
   };
   $('#f-pin').onclick = () => { pinBuf = ''; pinFirst = ''; pinMode = 'set1'; go('pin'); };
