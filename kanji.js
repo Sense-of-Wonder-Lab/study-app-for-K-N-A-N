@@ -45,7 +45,9 @@ function radSVG(name, cls) {
 }
 
 /* ---------- パーツと くみたての じゅんび ---------- */
-let K_LEAVES = {}, K_ATOMIC = new Set(), K_RECIPE_KEY = {};
+let K_LEAVES = {}, K_ATOMIC = new Set(), K_RECIPE_KEY = {}, K_RECIPES = {};
+// べつの くみかたでも つくれる かんじ(森 = 木+林 でも 木+木+木 でも OK)
+const K_ALT_REC = { '森': [['木', '木', '木']] };
 function kPrepare() {
   // それぞれの かんじに ひつような いちばん小さい パーツ(作った かんじも パーツに なる)
   const memo = {};
@@ -60,7 +62,10 @@ function kPrepare() {
   Object.keys(KD.G).forEach(k => {
     K_LEAVES[k] = [...new Set(leaves(k))];
     if (!KD.REC[k]) K_ATOMIC.add(k);
-    else K_RECIPE_KEY[k] = KD.REC[k].slice().sort().join('');
+    else {
+      K_RECIPES[k] = [KD.REC[k]].concat(K_ALT_REC[k] || []);
+      K_RECIPE_KEY[k] = K_RECIPES[k].map(r => r.slice().sort().join(''));
+    }
   });
 }
 /* ---------- おなじ ぶしゅの よびわけ(いと・いとへん など)は おなじ もの あつかい ---------- */
@@ -106,7 +111,7 @@ function kOwned(pid) {
 }
 function kMakeable(pid) {
   const own = kOwned(pid), got = kanjiOf(pid);
-  return Object.keys(K_RECIPE_KEY).filter(k => !got[k] && KD.REC[k].every(p => own[p]));
+  return Object.keys(K_RECIPES).filter(k => !got[k] && K_RECIPES[k].some(r => r.every(p => own[p])));
 }
 // ごほうびの パーツを えらぶ: つぎに つくれそうな かんじの たりない パーツから
 function kRewardParts(g, n, prefer) {
@@ -271,15 +276,9 @@ RENDER['kobo'] = () => {
     const list = Object.keys(own);
     // かくすうの すくない じゅんに ならべる
     list.sort((a, b) => kStrokes(a) - kStrokes(b) || (KD.G[a] ? 1 : 0) - (KD.G[b] ? 1 : 0) || a.localeCompare(b));
-    // まだ つくっていない かんじに つかえない パーツは グレーに する(えらんでいる パーツも かんがえる)
-    const got = kanjiOf(current), cnt = arr => arr.reduce((m, p) => (m[p] = (m[p] || 0) + 1, m), {});
-    const sel = cnt(kSel), usable = new Set();
-    Object.keys(K_RECIPE_KEY).forEach(k => {
-      if (got[k]) return;
-      const r = cnt(KD.REC[k]);
-      if (!Object.keys(sel).every(p => (r[p] || 0) >= sel[p])) return;
-      Object.keys(r).forEach(p => { if (r[p] > (sel[p] || 0)) usable.add(p); });
-    });
+    // まだ つくっていない かんじの どれにも つかわない パーツは グレーに する
+    const got = kanjiOf(current), usable = new Set();
+    Object.keys(K_RECIPES).forEach(k => { if (!got[k]) K_RECIPES[k].forEach(r => r.forEach(p => usable.add(p))); });
     $('#kb-tray').innerHTML = list.length ? list.map(p => `<button data-p="${esc(p)}" class="${kSel.includes(p) ? 'on' : ''}${KD.G[p] ? ' isk' : ''}${usable.has(p) ? '' : ' off'}"${usable.has(p) ? '' : ' disabled'}>${partSVG(p)}</button>`).join('')
       : '<p class="sub">まだ パーツが ないよ。かんじの もんだいを といて あつめよう!</p>';
     // おなじ パーツを 2かい えらんでも よい(林 = 木 + 木)
@@ -299,7 +298,7 @@ $('#kb-clear').onclick = () => { sound.tap(); kSel = []; RENDER.kobo(); };
 $('#kb-make').onclick = () => {
   const key = kSel.slice().sort().join('');
   const got = kanjiOf(current);
-  const hits = Object.keys(K_RECIPE_KEY).filter(k => K_RECIPE_KEY[k] === key).sort((a, b) => (got[a] ? 1 : 0) - (got[b] ? 1 : 0) || KD.G[a] - KD.G[b]);
+  const hits = Object.keys(K_RECIPE_KEY).filter(k => K_RECIPE_KEY[k].includes(key)).sort((a, b) => (got[a] ? 1 : 0) - (got[b] ? 1 : 0) || KD.G[a] - KD.G[b]);
   if (!hits.length) {
     sound.ng(); replay($('#kb-slots'), 'shake');
     $('#kb-hint').textContent = 'その くみあわせでは できなかった…';
