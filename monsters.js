@@ -55,6 +55,7 @@ const ACTIVE_MONSTER_LEVEL_IDS = new Set([
   'c8', 'c6', 'g3d', 'g3e', 'g3f', 'g3g', 'g3h',
   'g4d', 'g4e', 'g5a', 'q1', 'q2', 'q3', 'q4',
 ]);
+const ALL_MONSTERS = MONSTERS.slice();
 MONSTERS.splice(0, MONSTERS.length, ...MONSTERS.filter(m => ACTIVE_MONSTER_LEVEL_IDS.has(m.level)));
 
 function hashStr(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }

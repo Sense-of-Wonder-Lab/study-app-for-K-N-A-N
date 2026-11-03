@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '6.0.0';
+const APP_VERSION = '6.1.1';
 const STORE_KEY = 'manabi_v2'; // 5.0.0: 着せ替え・出題構成の刷新に伴い新しい保存領域を使う
 
 /* ========== テーマ(子どもごとの見た目) ========== */
@@ -264,12 +264,24 @@ RENDER.home = () => {
   } else {
     const n = Object.keys(zukanOf(current)).length;
     btn.dataset.go = 'zukan';
-    btn.innerHTML = `<span class="emoji">📖</span>かいじゅう ずかん<span class="note">${n} / ${MONSTERS.length} たい あつめた</span>`;
+    btn.innerHTML = `<span class="emoji">📖</span>キャラ ずかん<span class="note">${n} / ${allMonsterIds().length} たい あつめた</span>`;
     chara.style.display = 'none';
   }
   $$('#s-home .big .note')[0].textContent = isDress() ? 'もんだいを といて プレゼントを ゲット!' : 'かいじゅうと バトル!';
 };
+// メニュー・えらぶ画面に ならべる ごほうびの ちいさい 絵
+function thumb(id, dress, got) {
+  if (dress) { const it = duItem(id); return got[id] ? `<span class="mthumb">${itemSVG(it)}</span>` : '<span class="mthumb q">?</span>'; }
+  const c = charInfo(id);
+  if (!got[id]) return c.hero ? `<span class="mthumb sil">${c.svg()}</span>` : monsterSVG(MONSTERS.find(m => m.id === id), { silhouette: true });
+  return c.hero ? `<span class="mthumb">${c.svg({ kira: got[id].kira })}</span>` : c.svg({ kira: got[id].kira });
+}
 function miniMonsters(levelId) {
+  const rs = rewardSlots(profile(current).style, levelId);
+  if (rs) {
+    const dress = isDress(), got = dress ? closetOf(current) : zukanOf(current);
+    return Object.values(rs).flat().map(id => thumb(id, dress, got)).join('');
+  }
   if (isDress()) {
     const c = closetOf(current);
     return DU_ITEMS.filter(it => it.level === levelId).map(it => c[it.id] ? `<span class="mthumb">${itemSVG(it)}</span>` : '<span class="mthumb q">?</span>').join('');
@@ -287,20 +299,40 @@ function levelButton(l, onClick, extra) {
 RENDER['calc-menu'] = () => {
   const p = profile(current);
   const box = $('#calc-levels'); box.innerHTML = '';
-  $$('#mode-seg button').forEach(b => b.classList.toggle('on', b.dataset.mode === calcMode));
   $('#calc-lvtabs').innerHTML = [1, 2, 3, 4, 5, 6].map(g => `<button data-g="${g}" class="${g === p.lv ? 'on' : ''}">レベル${g}</button>`).join('');
   $$('#calc-lvtabs button').forEach(b => b.onclick = () => { sound.tap(); p.lv = Number(b.dataset.g); save(); RENDER['calc-menu'](); });
-  const ta = DB.ta[current] || {};
   const list = CALC_LEVELS.filter(l => l.grade === p.lv);
   if (!list.length) box.innerHTML = '<p class="sub" style="grid-column:1/-1;padding:30px 0">レベル' + p.lv + 'の もんだいは じゅんびちゅう だよ</p>';
   list.forEach(l => {
-    const b = levelButton(l, () => calcMode === 'ta' ? startTA(l) : startCalc(l));
-    if (calcMode === 'ta') b.insertAdjacentHTML('beforeend', `<span class="best">${ta[l.id] ? '🏆 ベスト ' + ta[l.id] + 'もん' : 'まだ きろく なし'}</span>`);
-    else b.insertAdjacentHTML('beforeend', `<span class="mini">${miniMonsters(l.id)}</span>`);
+    const b = levelButton(l, () => openModes(l));
+    b.insertAdjacentHTML('beforeend', `<span class="mini">${miniMonsters(l.id)}</span>`);
     box.appendChild(b);
   });
 };
-$$('#mode-seg button').forEach(b => b.onclick = () => { sound.tap(); calcMode = b.dataset.mode; RENDER['calc-menu'](); });
+// あそびかたを えらぶ(ごほうびと 目標も みせる)
+function recOf(levelId, key) { const r = DB.records[current] = DB.records[current] || {}; return r[levelId + '_' + key]; }
+function tierLabel(md, t) { return md.kind === 'time' ? `${t}びょう いない` : `${t}もん いじょう`; }
+function openModes(l) {
+  const p = profile(current), dress = isDress(), got = dress ? closetOf(current) : zukanOf(current);
+  const rs = rewardSlots(p.style, l.id);
+  const rows = rewardModes(l.id).map(md => {
+    const r = recOf(l.id, md.key);
+    const best = r ? (md.kind === 'time' ? `ベスト ${r.time}びょう` : `ベスト ${r.count}もん`) : 'まだ きろく なし';
+    return `<button class="md-row" data-k="${md.key}"><span class="md-name">${md.icon} ${md.name}${md.n ? `<small>${md.n}もん</small>` : ''}</span>
+      <span class="md-tiers">${md.tiers.map((t, i) => `<span class="md-t">${thumb(rs[md.key][i], dress, got)}<small>${tierLabel(md, t)}</small></span>`).join('')}</span>
+      <span class="md-best">${best}</span></button>`;
+  }).join('');
+  $('#zk-box').innerHTML = `<h3>${l.emoji} ${esc(l.name)}</h3><p>あそびかたを えらんでね</p><div class="md-list">${rows}</div>
+    <div class="btnrow" style="margin-top:10px"><button class="btn gray" id="zk-close">やめる</button></div>`;
+  $('#zk-box').classList.add('wide');
+  $('#zk-modal').classList.add('on');
+  $('#zk-close').onclick = () => $('#zk-modal').classList.remove('on');
+  $$('#zk-box .md-row').forEach(b => b.onclick = () => {
+    const md = rewardModes(l.id).find(x => x.key === b.dataset.k);
+    $('#zk-modal').classList.remove('on'); sound.tap();
+    md.kind === 'count' ? startTA(l, md) : startCalc(l, md);
+  });
+}
 RENDER['pref-menu'] = () => {
   const p = profile(current);
   const box = $('#pref-levels'); box.innerHTML = '';
@@ -334,9 +366,23 @@ function renderArena() {
     return;
   }
   const m = game.mon;
+  if (game.kind === 'calc') {
+    const goal = `<div class="tline">⏱ <b id="b-time">0.0</b>びょう<span id="b-goal">${esc(game.goalText)}</span></div>`;
+    if (game.dress) {
+      const it = duItem(game.target);
+      a.innerHTML = `<div class="mon-head"><span class="mon-name">🎁 プレゼント</span><div class="hp gift"><i id="hp"></i></div><span class="hpnum" id="hpnum"></span></div>
+        <div class="mon gift" id="mon">${giftSVG(it.special ? DU_COLORS.gold[1] : (DU_COLORS[it.color] || DU_HAIR[it.color] || DU_COLORS.pink)[1])}</div>${goal}<div class="dmg" id="dmg"></div>`;
+    } else {
+      const c = charInfo(game.target);
+      a.innerHTML = `<div class="mon-head"><span class="mon-name">${c.boss ? '<span class="boss">ボス</span>' : ''}${esc(c.name)}</span><div class="hp"><i id="hp"></i></div><span class="hpnum" id="hpnum"></span></div>
+        <div class="mon" id="mon">${c.svg()}</div>${goal}<div class="dmg" id="dmg"></div>`;
+    }
+    updateHP();
+    return;
+  }
   if (game.dress) {
     a.innerHTML = `<div class="mon-head"><span class="mon-name">${m.special ? '<span class="boss">とくべつ</span>' : ''}🎁 プレゼント</span><div class="hp gift"><i id="hp"></i></div><span class="hpnum" id="hpnum"></span></div>
-      <div class="mon gift" id="mon">${giftSVG(DU_COLORS[m.special ? 'gold' : m.color === 'white' ? 'pink' : m.color][1])}</div><div class="dmg" id="dmg"></div>`;
+      <div class="mon gift" id="mon">${giftSVG(m.special ? DU_COLORS.gold[1] : (DU_COLORS[m.color] || DU_HAIR[m.color] || DU_COLORS.pink)[1])}</div><div class="dmg" id="dmg"></div>`;
     updateHP();
     return;
   }
@@ -345,9 +391,9 @@ function renderArena() {
   updateHP();
 }
 function updateHP() {
-  const left = SET_SIZE - game.i;
-  if (game.dress) { $('#hp').style.width = (game.i / SET_SIZE * 100) + '%'; $('#hpnum').textContent = `♥ ${game.i}/${SET_SIZE}`; return; }
-  $('#hp').style.width = (left / SET_SIZE * 100) + '%';
+  const N = game.n || SET_SIZE, left = N - game.i;
+  if (game.dress) { $('#hp').style.width = (game.i / N * 100) + '%'; $('#hpnum').textContent = `♥ ${game.i}/${N}`; return; }
+  $('#hp').style.width = (left / N * 100) + '%';
   $('#hpnum').textContent = `HP ${left}`;
 }
 function popDmg(text, color) {
@@ -390,7 +436,57 @@ function defeat() {
     setTimeout(() => { if (still()) finish(); }, 950);
   }, 350);
 }
+// 目標を クリアした だんかいの ごほうびを わたす
+function giveRewards(ids, achieved, kira) {
+  const dress = isDress(), got = dress ? closetOf(current) : zukanOf(current), fresh = [];
+  achieved.forEach(i => {
+    const id = ids[i], old = got[id];
+    if (!old) fresh.push(id);
+    got[id] = { n: (old ? old.n : 0) + 1, kira: !!(old && old.kira) || kira, first: old ? old.first : today() };
+  });
+  save();
+  return fresh;
+}
+function showRewardResult(ids, achieved, fresh, kira, missText) {
+  const dress = isDress();
+  const show = fresh.length ? fresh : achieved.length ? [ids[achieved[achieved.length - 1]]] : [];
+  $('#r-wear').style.display = 'none';
+  if (!show.length) {
+    $('#r-mon').innerHTML = `<div class="r-parts">${dress ? '<span>🎁</span>' : `<span class="sil">${charInfo(ids[0]).svg()}</span>`}</div>`;
+    $('#r-get').textContent = missText;
+  } else if (dress) {
+    const it = duItem(show[show.length - 1]);
+    $('#r-mon').innerHTML = `<div class="r-pair">${show.map(id => `<div class="r-item">${itemSVG(duItem(id))}</div>`).join('')}${charSVG(wearPreview(outfitOf(current), it), { kira })}</div>`;
+    $('#r-get').textContent = fresh.length ? `${fresh.map(id => duItem(id).name).join('・')} を ゲット!` : `${it.name} を また ゲット!`;
+    const w = $('#r-wear'); w.style.display = ''; w.textContent = '👗 きてみる';
+    w.onclick = () => { sound.tap(); wear(it); closetTab = it.cat; go('closet'); };
+  } else {
+    $('#r-mon').innerHTML = `<div class="r-parts">${show.map(id => `<span class="rc">${charInfo(id).svg({ kira })}</span>`).join('')}</div>`;
+    $('#r-get').textContent = fresh.length ? `${fresh.map(id => charInfo(id).name).join('・')} が なかまに なった!` : `${charInfo(show[0]).name} を また やっつけた!`;
+  }
+  replay($('#r-mon'), 'appear');
+  $('#r-badges').innerHTML = (fresh.length ? '<span class="badge">NEW!</span>' : '') + (kira && show.length ? '<span class="badge kira">✨ ノーミスで キラキラ!</span>' : '');
+}
+function finishCalc() {
+  const md = game.md, n = game.results.filter(x => x).length, kira = n === game.n;
+  const time = Math.round(game.elapsed * 10) / 10;
+  const r = DB.records[current] = DB.records[current] || {}, key = game.level.id + '_' + md.key, prev = r[key];
+  const isBest = !prev || time < prev.time;
+  if (isBest) r[key] = { time, best: n };
+  const ids = rewardSlots(profile(current).style, game.level.id)[md.key];
+  const achieved = md.tiers.map((t, i) => time <= t ? i : -1).filter(i => i >= 0);
+  const fresh = giveRewards(ids, achieved, kira);
+  go('result');
+  const nextI = md.tiers.findIndex(t => time > t);
+  showRewardResult(ids, achieved, fresh, kira, `${md.tiers[0]}びょう いないで なかまに なるよ`);
+  $('#r-stars').textContent = '⭐'.repeat(achieved.length) + '☆'.repeat(md.tiers.length - achieved.length);
+  $('#r-score').textContent = `${time} びょう`;
+  $('#r-detail').textContent = `${game.level.name}・${md.name}・1かいで せいかい ${n}/${game.n}` + (nextI >= 0 ? `・つぎは ${md.tiers[nextI]}びょう いない!` : '');
+  $('#r-best').textContent = isBest && prev ? '🎉 じこベスト こうしん!' : prev ? `じこベスト ${prev.time}びょう` : '';
+  sound.fanfare();
+}
 function finish() {
+  if (game.kind === 'calc') { finishCalc(); return; }
   const n = game.results.filter(x => x).length;
   const time = Math.round((Date.now() - game.startAt) / 1000);
   const rec = DB.records[current] = DB.records[current] || {};
@@ -437,7 +533,7 @@ function finishDress(n, time, isBest, prev) {
   const w = $('#r-wear'); w.style.display = ''; w.textContent = '👗 きてみる';
   w.onclick = () => { sound.tap(); wear(it); closetTab = it.cat; go('closet'); };
 }
-$('#r-again').onclick = () => { sound.tap(); game.kind === 'kanji' ? startKanji(game.grade, game.mode) : game.kind === 'calc' ? startCalc(game.level) : game.kind === 'ta' ? startTA(game.level) : startPref(game.level); };
+$('#r-again').onclick = () => { sound.tap(); game.kind === 'kanji' ? startKanji(game.grade, game.mode) : game.kind === 'calc' ? startCalc(game.level, game.md) : game.kind === 'ta' ? startTA(game.level, game.md) : startPref(game.level); };
 $('#r-menu').onclick = () => { sound.tap(); go(game.kind === 'kanji' ? 'kanji' : game.kind === 'pref' ? 'pref-menu' : 'calc-menu'); };
 $('#calc-quit').onclick = () => { sound.tap(); go('calc-menu'); };
 $('#pref-quit').onclick = () => { sound.tap(); go('pref-menu'); };
@@ -455,13 +551,38 @@ function makeCalcItems(level, n) {
   }
   return items;
 }
-function startCalc(level) {
-  game = { kind: 'calc', level, items: makeCalcItems(level, SET_SIZE), i: 0, results: [], startAt: Date.now(), combo: 0, mon: pickMonster(level.id), dress: isDress() };
-  $('#calc-title').textContent = level.name;
+let btTimer = null;
+function startCalc(level, md) {
+  md = md || rewardModes(level.id)[0];
+  const n = md.n || SET_SIZE;
+  let items;
+  if (md.order) items = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(b => normItem([`${level.kuku} × ${b}`, level.kuku * b]));
+  else if (level.kuku) {  // 九九 ランダム: おなじ 問題が つづかないように
+    items = []; let last = 0;
+    while (items.length < n) { const b = rnd(1, 9); if (b === last) continue; last = b; items.push(normItem([`${level.kuku} × ${b}`, level.kuku * b])); }
+  } else items = makeCalcItems(level, n);
+  const dress = isDress(), got = dress ? closetOf(current) : zukanOf(current);
+  const ids = rewardSlots(profile(current).style, level.id)[md.key];
+  const ti = ids.findIndex(id => !got[id]);
+  const target = ids[ti >= 0 ? ti : ids.length - 1];
+  const goalText = ti >= 0 ? ` ・ めざせ ${md.tiers[ti]}びょう` : ' ・ ぜんぶ ゲット!';
+  game = { kind: 'calc', level, md, n, items, i: 0, results: [], startAt: Date.now(), elapsed: 0, combo: 0, target, goalText, dress };
+  $('#calc-title').textContent = `${level.name}・${md.name}`;
   go('calc-play');
   setupKeys(level);
   renderArena();
   showCalc();
+  // タイム: ほかの アプリに いる あいだは とめる
+  clearInterval(btTimer);
+  let last = performance.now();
+  const g0 = game;
+  btTimer = setInterval(() => {
+    const now = performance.now(), dt = (now - last) / 1000; last = now;
+    if (game !== g0 || screen !== 'calc-play') { clearInterval(btTimer); return; }
+    if (game.done || document.visibilityState !== 'visible') return;
+    game.elapsed += Math.min(dt, 0.5);
+    const t = $('#b-time'); if (t) t.textContent = game.elapsed.toFixed(1);
+  }, 100);
 }
 // 小数点ボタンは 小数の レベルだけ
 function setupKeys(level) { $('#key-dot').style.visibility = level.dec ? 'visible' : 'hidden'; }
@@ -553,7 +674,7 @@ function answerCalc() {
       setTimeout(() => { if (screen === 'calc-play' && game.kind === 'ta' && game.left > 0) showCalc(); }, 120);
       return;
     }
-    if (game.i >= SET_SIZE) { defeat(); return; }
+    if (game.i >= game.n) { game.done = true; defeat(); return; }
     updateHP();
     setTimeout(() => { if (screen === 'calc-play') showCalc(); }, 220);
     return;
@@ -572,8 +693,9 @@ function answerCalc() {
 
 /* ---------- 60びょう アタック ---------- */
 let taTimer = null;
-function startTA(level) {
-  game = { kind: 'ta', level, items: makeCalcItems(level, 30), i: 0, results: [], startAt: Date.now(), combo: 0, count: 0, left: TA_SEC };
+function startTA(level, md) {
+  md = md || rewardModes(level.id).find(x => x.key === 'ta');
+  game = { kind: 'ta', level, md, items: makeCalcItems(level, 30), i: 0, results: [], startAt: Date.now(), combo: 0, count: 0, left: TA_SEC };
   $('#calc-title').textContent = '⏱️ ' + level.name;
   go('calc-play');
   setupKeys(level);
@@ -600,14 +722,18 @@ function finishTA() {
   const prev = ta[game.level.id] || 0;
   const isBest = n > prev;
   if (isBest) ta[game.level.id] = n;
-  save();
+  const r = DB.records[current] = DB.records[current] || {}, key = game.level.id + '_ta';
+  if (!r[key] || n > r[key].count) r[key] = { count: n };
+  const md = game.md, ids = rewardSlots(profile(current).style, game.level.id).ta;
+  const achieved = md.tiers.map((t, i) => n >= t ? i : -1).filter(i => i >= 0);
+  const fresh = giveRewards(ids, achieved, false);
   go('result');
-  $('#r-mon').innerHTML = '<div style="font-size:140px;line-height:200px">⏱️</div>';
-  $('#r-get').textContent = 'タイムアップ!';
-  $('#r-badges').innerHTML = isBest && n > 0 ? '<span class="badge best">🏆 ベスト きろく!</span>' : '';
-  $('#r-stars').textContent = '';
+  showRewardResult(ids, achieved, fresh, false, `${md.tiers[0]}もん とけたら なかまに なるよ`);
+  if (isBest && n > 0) $('#r-badges').insertAdjacentHTML('beforeend', '<span class="badge best">🏆 ベスト きろく!</span>');
+  const nextI = md.tiers.findIndex(t => n < t);
+  $('#r-stars').textContent = '⭐'.repeat(achieved.length) + '☆'.repeat(md.tiers.length - achieved.length);
   $('#r-score').textContent = `${n} もん せいかい`;
-  $('#r-detail').textContent = `${game.level.name}・60びょう`;
+  $('#r-detail').textContent = `${game.level.name}・60びょう` + (nextI >= 0 ? `・つぎは ${md.tiers[nextI]}もん!` : '');
   $('#r-best').textContent = isBest && prev ? `まえの ベストは ${prev}もん` : prev ? `ベスト ${prev}もん` : '';
   sound.fanfare();
 }
@@ -691,33 +817,36 @@ function answerPref(btn) {
 
 /* ========== ずかん ========== */
 RENDER.zukan = () => {
-  const z = zukanOf(current);
-  const n = Object.keys(z).length, k = Object.values(z).filter(x => x.kira).length;
-  $('#zk-count').textContent = `📖 ${n} / ${MONSTERS.length} たい   ✨ キラキラ ${k} たい`;
+  const z = zukanOf(current), all = allMonsterIds();
+  const n = all.filter(id => z[id]).length, k = all.filter(id => z[id] && z[id].kira).length;
+  $('#zk-count').textContent = `📖 ${n} / ${all.length} たい   ✨ キラキラ ${k} たい`;
   const box = $('#zk-list'); box.innerHTML = '';
-  ALL_LEVELS.forEach(l => {
-    const ms = MONSTERS.filter(m => m.level === l.id);
+  const groups = CALC_LEVELS.map(l => [l, Object.values(REWARD.monster[l.id] || {}).flat()])
+    .concat(PREF_LEVELS.map(l => [l, MONSTERS.filter(m => m.level === l.id).map(m => m.id)]));
+  groups.forEach(([l, ids]) => {
+    if (!ids.length) return;
     const g = document.createElement('div');
     g.className = 'zk-group';
-    g.innerHTML = `<h3>${l.emoji} ${esc(l.name)}${PREF_LEVELS.includes(l) ? '(とどうふけん)' : ''}</h3><div class="zk-row"></div>`;
+    g.innerHTML = `<h3>${l.emoji} ${esc(l.name)}${PREF_LEVELS.includes(l) ? '(とどうふけん)' : `(レベル${l.grade})`}</h3><div class="zk-row"></div>`;
     const row = g.querySelector('.zk-row');
-    ms.forEach(m => {
-      const got = z[m.id];
-      const c = document.createElement('button');
-      c.className = 'zk-cell' + (got ? '' : ' none');
-      c.innerHTML = monsterSVG(m, { silhouette: !got, kira: got && got.kira }) + (got ? esc(m.name) : (m.boss ? '??? (ボス)' : '???')) + (got && got.kira ? '<span class="k">✨</span>' : '');
-      c.onclick = () => { if (got) { sound.tap(); openMon(m); } };
-      row.appendChild(c);
+    ids.forEach(id => {
+      const got = z[id], c = charInfo(id);
+      const b = document.createElement('button');
+      b.className = 'zk-cell' + (got ? '' : ' none');
+      const pic = got ? c.svg({ kira: got.kira }) : c.hero ? `<span class="sil">${c.svg()}</span>` : monsterSVG(MONSTERS.find(m => m.id === id), { silhouette: true });
+      b.innerHTML = pic + (got ? esc(c.name) : (c.boss ? '??? (ボス)' : '???')) + (got && got.kira ? '<span class="k">✨</span>' : '');
+      b.onclick = () => { if (got) { sound.tap(); openMon(id, l); } };
+      row.appendChild(b);
     });
     box.appendChild(g);
   });
 };
-function openMon(m) {
-  const got = zukanOf(current)[m.id];
-  const lv = ALL_LEVELS.find(l => l.id === m.level);
-  $('#zk-box').innerHTML = `${monsterSVG(m, { kira: got.kira })}<h3>${m.boss ? '👑 ' : ''}${esc(m.name)}</h3>
-    <p>${esc(lv.name)} に でてくる</p><p>やっつけた かず: ${got.n} かい</p>
-    <p>${got.kira ? '✨ キラキラ ゲットずみ!' : 'ノーミスで やっつけると キラキラに なるよ'}</p>
+function openMon(id, lv) {
+  const got = zukanOf(current)[id], c = charInfo(id);
+  $('#zk-box').classList.remove('wide');
+  $('#zk-box').innerHTML = `${c.svg({ kira: got.kira })}<h3>${c.boss ? '👑 ' : ''}${esc(c.name)}</h3>
+    <p>${esc(lv.name)} で なかまに なる</p><p>ゲットした かず: ${got.n} かい</p>
+    <p>${got.kira ? '✨ キラキラ ゲットずみ!' : 'ノーミスで ゲットすると キラキラに なるよ'}</p>
     <div class="btnrow" style="margin-top:12px"><button class="btn" id="zk-close">とじる</button></div>`;
   $('#zk-modal').classList.add('on');
   $('#zk-close').onclick = () => $('#zk-modal').classList.remove('on');
@@ -849,7 +978,7 @@ RENDER.parent = () => {
       <div class="row">1日の上限
         <select class="f-limit">${limits.map(m => `<option value="${m}" ${m === p.limitMin ? 'selected' : ''}>${m}分</option>`).join('')}</select></div>
       <div class="row">今日の使用: <b>${Math.floor(u.sec / 60)}分${Math.floor(u.sec % 60)}秒</b> / 上限 ${Math.round(limitSec(p) / 60)}分${u.bonusSec ? `(延長 +${u.bonusSec / 60}分含む)` : ''}</div>
-      <div class="row" style="color:var(--sub);font-size:16px">ずかん ${zn} / ${MONSTERS.length} たい・きせかえ ${Object.keys(closetOf(p.id)).length} / ${DU_ITEMS.length} こ</div>
+      <div class="row" style="color:var(--sub);font-size:16px">ずかん ${zn} / ${allMonsterIds().length} たい・きせかえ ${Object.keys(closetOf(p.id)).length} / ${DU_ITEMS.length} こ</div>
       <div class="row">
         <button class="sbtn primary f-ext">今日だけ +10分</button>
         <button class="sbtn f-reset">今日の使用時間を0に</button>

@@ -97,6 +97,9 @@ const CALC_LEVELS = [
   { id: 'g2c', grade: 2, emoji: '🧮', name: '3けたの たしざん・ひきざん', note: '125 + 38、342 − 17 など', gen() {
       if (Math.random() < 0.5) { for (;;) { const a = rnd(100, 899), b = rnd(10, 99); if (a + b <= 999) return [`${a} + ${b}`, a + b]; } }
       for (;;) { const a = rnd(110, 999), b = rnd(10, 99); if (a - b >= 100) return [`${a} − ${b}`, a - b]; } } },
+  // 九九 1だんずつ(じゅんばん / ランダム / 60びょう)
+  ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ id: 'k' + n, grade: 2, kuku: n, emoji: ['', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'][n],
+    name: `${n}のだん`, note: `${n} × 1 〜 ${n} × 9`, gen: kuku([n]) })),
   { id: 'g2k1', grade: 2, emoji: '🖐️', name: '九九 2・5のだん', note: '2のだん と 5のだん', gen: kuku([2, 5]) },
   { id: 'g2k2', grade: 2, emoji: '🍀', name: '九九 3・4のだん', note: '3のだん と 4のだん', gen: kuku([3, 4]) },
   { id: 'g2k3', grade: 2, emoji: '🌟', name: '九九 6・7のだん', note: '6のだん と 7のだん', gen: kuku([6, 7]) },
@@ -228,6 +231,7 @@ const CALC_LEVELS = [
 const ALL_CALC_LEVELS = CALC_LEVELS.slice();
 const ACTIVE_CALC_LEVEL_IDS = new Set([
   'g1L1a', 'g1L1b', 'g1L2a', 'g1L2b',
+  'k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9',
   'g2k1', 'g2k2', 'g2k3', 'g2k4', 'c5', 'g2e',   // レベル2: 九九
   'c8', 'c6', 'g3d', 'g3e', 'g3f', 'g3g', 'g3h', // レベル3: 2けた×1けた ほか
   'g4d', 'g4e',

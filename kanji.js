@@ -333,6 +333,7 @@ RENDER['kzukan'] = () => {
 function openKanjiCard(k, title) {
   const rn = KD.RN[k];
   const ex = (KD.EX[k] || []).map(([w, r]) => `<li>${esc(w)}<small>${esc(r)}</small></li>`).join('');
+  $('#zk-box').classList.remove('wide');
   $('#zk-box').innerHTML = `${title ? `<p class="kc-title">${title}</p>` : ''}<div class="kc-glyph">${kanjiSVG(k)}</div>
     <p>レベル${KD.G[k]}の かんじ・${KD.SC[k]}かく</p>
     ${rn ? `<p class="kc-rad">${radSVG(rn)}<span>ぶしゅ: ${esc(rn)}</span></p>` : ''}

@@ -510,5 +510,6 @@ function heroSVG(type, opt = {}) {
   if (T.human) s += `<circle cx="50" cy="150" r="9" fill="${fist}" ${HL(3.5)}/>`;
   s += h.head;
   if (boss) s += `<path d="M76,26 L72,4 L88,16 L100,-2 L112,16 L128,4 L124,26 Q100,20 76,26 Z" fill="#ffd23f" stroke="#a67c00" stroke-width="3" stroke-linejoin="round" transform="translate(0 4)"/>`;
+  if (opt.kira) s += [[26, 40, 12], [176, 30, 10], [184, 150, 12], [18, 160, 9]].map(([x, y, r]) => `<path d="M${x},${y - r} L${x + r * .3},${y - r * .3} L${x + r},${y} L${x + r * .3},${y + r * .3} L${x},${y + r} L${x - r * .3},${y + r * .3} L${x - r},${y} L${x - r * .3},${y - r * .3} Z" fill="#ffd23f" stroke="#fff" stroke-width="2"/>`).join('');
   return s + '</svg>';
 }
