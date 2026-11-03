@@ -63,6 +63,43 @@ function kPrepare() {
     else K_RECIPE_KEY[k] = KD.REC[k].slice().sort().join('');
   });
 }
+/* ---------- おなじ ぶしゅの よびわけ(いと・いとへん など)は おなじ もの あつかい ---------- */
+// かたちが おなじで、いちで よびかたが かわるだけの ものを まとめる
+const K_RAD_SAME = [
+  ['くち', 'くちへん'], ['つち', 'つちへん'], ['おんな', 'おんなへん'], ['こ', 'こへん'], ['やま', 'やまへん'],
+  ['にち', 'にちへん'], ['つき', 'つきへん'], ['き', 'きへん'], ['ひ', 'ひへん'], ['おう', 'おうへん'],
+  ['た', 'たへん'], ['しろ', 'しろへん'], ['め', 'めへん'], ['いし', 'いしへん'], ['たけ', 'たけかんむり'],
+  ['いと', 'いとへん'], ['みみ', 'みみへん'], ['かい', 'かいへん'], ['あし', 'あしへん'], ['くるま', 'くるまへん'],
+  ['かね', 'かねへん'], ['あめ', 'あめかんむり'], ['ゆみ', 'ゆみへん'], ['ほう', 'ほうへん'], ['うし', 'うしへん'],
+  ['や', 'やへん'], ['こめ', 'こめへん'], ['つの', 'つのへん'], ['さと', 'さとへん'], ['うま', 'うまへん'],
+  ['かた', 'かたへん'], ['のぎ', 'のぎへん'], ['あな', 'あなかんむり'], ['はち', 'はちがしら'],
+];
+const K_RAD_GRP = {};
+K_RAD_SAME.forEach(g => g.forEach(n => K_RAD_GRP[n] = g[0]));
+function rGrp(n) { return K_RAD_GRP[n] || n; }
+// もんだいの せんたくしに おなじ ぶしゅが 2つ でないように する(でたら ほかの ものに いれかえ)
+function kFixRadQ(q, g) {
+  if (q.t === '1' || q.t === '2') {
+    const used = new Set([rGrp(q.a)]), o = [];
+    const pool = shuffle([...new Set((KD.QB[g][q.t] || []).flatMap(x => [x.a].concat(x.o)))]);
+    q.o.forEach(n => { if (!used.has(rGrp(n))) { used.add(rGrp(n)); o.push(n); } });
+    for (const n of pool) { if (o.length >= q.o.length) break; if (!used.has(rGrp(n)) && KD.RG[n]) { used.add(rGrp(n)); o.push(n); } }
+    return Object.assign({}, q, { o });
+  }
+  if (q.t === '3') {
+    const gr = rGrp(q.n), bad = k => rGrp(KD.RN[k]) === gr;
+    const o = q.o.filter(k => !bad(k));
+    const pool = shuffle([...new Set((KD.QB[g]['3'] || []).flatMap(x => [x.a].concat(x.o)))]);
+    for (const k of pool) { if (o.length >= q.o.length) break; if (k !== q.a && !o.includes(k) && KD.RN[k] && !bad(k)) o.push(k); }
+    return Object.assign({}, q, { o });
+  }
+  return q;
+}
+// こうぼうで つかわない パーツの みため(index.html を さわらずに すむよう ここで たす)
+document.head.insertAdjacentHTML('beforeend', '<style>.kb-tray button.off{opacity:.3;filter:grayscale(1);box-shadow:0 2px 0 var(--line)}</style>');
+// かくすう(KanjiVG は 1かく = 1本の 線)
+function kStrokes(p) { return (KD.GL[p] || (KD.PA[p] || [[]])[0]).length; }
+
 function kOwned(pid) {
   // つかえる パーツ: もらった パーツ + 作った かんじ
   return Object.assign({}, kpartsOf(pid), kanjiOf(pid));
@@ -131,7 +168,7 @@ function kMixPool(g) { return ['1', '2', '3', '4', '5', '6', '7'].flatMap(t => (
 /* ---------- プレイ ---------- */
 function startKanji(g, t) {
   const pool = t === 'mix' ? kMixPool(g) : KD.QB[g][t].map(q => Object.assign({ t }, q));
-  const items = shuffle(pool).slice(0, SET_SIZE);
+  const items = shuffle(pool).slice(0, SET_SIZE).map(q => kFixRadQ(q, g));
   game = { kind: 'kanji', grade: g, mode: t, items, i: 0, results: [], startAt: Date.now(), combo: 0 };
   $('#kp-title').textContent = `レベル${g}・${K_MODES.find(m => m.t === t).name}`;
   go('kplay');
@@ -232,11 +269,18 @@ RENDER['kobo'] = () => {
   loadKanji(() => {
     const own = kOwned(current);
     const list = Object.keys(own);
-    // よく つかう パーツを まえに
-    const use = {};
-    Object.values(KD.REC).forEach(r => r && r.forEach(p => use[p] = (use[p] || 0) + 1));
-    list.sort((a, b) => (use[b] || 0) - (use[a] || 0) || (KD.G[a] || 9) - (KD.G[b] || 9));
-    $('#kb-tray').innerHTML = list.length ? list.map(p => `<button data-p="${esc(p)}" class="${kSel.includes(p) ? 'on' : ''}${KD.G[p] ? ' isk' : ''}">${partSVG(p)}</button>`).join('')
+    // かくすうの すくない じゅんに ならべる
+    list.sort((a, b) => kStrokes(a) - kStrokes(b) || (KD.G[a] ? 1 : 0) - (KD.G[b] ? 1 : 0) || a.localeCompare(b));
+    // まだ つくっていない かんじに つかえない パーツは グレーに する(えらんでいる パーツも かんがえる)
+    const got = kanjiOf(current), cnt = arr => arr.reduce((m, p) => (m[p] = (m[p] || 0) + 1, m), {});
+    const sel = cnt(kSel), usable = new Set();
+    Object.keys(K_RECIPE_KEY).forEach(k => {
+      if (got[k]) return;
+      const r = cnt(KD.REC[k]);
+      if (!Object.keys(sel).every(p => (r[p] || 0) >= sel[p])) return;
+      Object.keys(r).forEach(p => { if (r[p] > (sel[p] || 0)) usable.add(p); });
+    });
+    $('#kb-tray').innerHTML = list.length ? list.map(p => `<button data-p="${esc(p)}" class="${kSel.includes(p) ? 'on' : ''}${KD.G[p] ? ' isk' : ''}${usable.has(p) ? '' : ' off'}"${usable.has(p) ? '' : ' disabled'}>${partSVG(p)}</button>`).join('')
       : '<p class="sub">まだ パーツが ないよ。かんじの もんだいを といて あつめよう!</p>';
     // おなじ パーツを 2かい えらんでも よい(林 = 木 + 木)
     $$('#kb-tray button').forEach(b => b.onclick = () => {
