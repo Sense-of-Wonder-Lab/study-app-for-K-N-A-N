@@ -129,7 +129,7 @@ function kFixRadQ(q, g) {
   return q;
 }
 // こうぼうで つかわない パーツの みため(index.html を さわらずに すむよう ここで たす)
-document.head.insertAdjacentHTML('beforeend', '<style>.kb-tray button.off{opacity:.3;filter:grayscale(1);box-shadow:0 2px 0 var(--line)}</style>');
+document.head.insertAdjacentHTML('beforeend', '<style>.kb-tray button.off{opacity:.3;filter:grayscale(1);box-shadow:0 2px 0 var(--line)}.kb-slots.five{gap:3px}.kb-slots.five span{width:min(100px,13vw);height:min(100px,13vw)}.kb-slots.five b{font-size:22px}</style>');
 // かくすう(KanjiVG は 1かく = 1本の 線)
 function kStrokes(p) { return (KD.GL[p] || (KD.PA[p] || [[]])[0]).length; }
 
@@ -298,9 +298,13 @@ function finishKanji() {
 $('#kp-quit').onclick = () => { sound.tap(); go('kanji'); };
 
 /* ---------- くみたて こうぼう ---------- */
+// スロットは ふだん 4つ。器(口+口+大+口+口)だけ 5つ いるので、口と 大が あって 器が まだの ときだけ 5つに する
+function kSlotMax() { const own = kOwned(current); return own['口'] && own['大'] && !kanjiOf(current)['器'] ? 5 : 4; }
 RENDER['kobo'] = () => {
   loadKanji(() => {
     const own = kOwned(current);
+    const smax = kSlotMax();
+    if (kSel.length > smax) kSel = kSel.slice(0, smax);
     const list = Object.keys(own);
     // かくすうの すくない じゅんに ならべる
     list.sort((a, b) => kStrokes(a) - kStrokes(b) || (KD.G[a] ? 1 : 0) - (KD.G[b] ? 1 : 0) || a.localeCompare(b));
@@ -311,14 +315,15 @@ RENDER['kobo'] = () => {
       : '<p class="sub">まだ パーツが ないよ。かんじの もんだいを といて あつめよう!</p>';
     // おなじ パーツを 2かい えらんでも よい(林 = 木 + 木)
     $$('#kb-tray button').forEach(b => b.onclick = () => {
-      if (kSel.length >= 4) return;
+      if (kSel.length >= smax) return;
       sound.tap(); kSel.push(b.dataset.p); RENDER.kobo();
     });
-    $('#kb-slots').innerHTML = [0, 1, 2, 3].map(i => `<span data-i="${i}" class="${kSel[i] ? 'on' : ''}">${kSel[i] ? partSVG(kSel[i]) : ''}</span>`).join('<b>+</b>');
+    $('#kb-slots').classList.toggle('five', smax === 5);
+    $('#kb-slots').innerHTML = [...Array(smax).keys()].map(i => `<span data-i="${i}" class="${kSel[i] ? 'on' : ''}">${kSel[i] ? partSVG(kSel[i]) : ''}</span>`).join('<b>+</b>');
     $$('#kb-slots span.on').forEach(s => s.onclick = () => { sound.tap(); kSel.splice(Number(s.dataset.i), 1); RENDER.kobo(); });
     $('#kb-make').disabled = kSel.length < 2;
     const mk = kMakeable(current).length;
-    $('#kb-hint').textContent = mk ? `いま つくれる かんじが ${mk}こ あるよ` : 'パーツを 2〜4こ えらんで「くみたてる」';
+    $('#kb-hint').textContent = mk ? `いま つくれる かんじが ${mk}こ あるよ` : `パーツを 2〜${smax}こ えらんで「くみたてる」`;
     $('#kb-count').textContent = `パーツ ${Object.keys(kpartsOf(current)).length}こ`;
   });
 };
