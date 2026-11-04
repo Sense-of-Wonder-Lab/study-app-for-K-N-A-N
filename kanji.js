@@ -77,6 +77,24 @@ function kPrepare() {
       K_RECIPE_KEY[k] = K_RECIPES[k].map(r => r.slice().sort().join(''));
     }
   });
+  // とちゅうの かんじを ばらした くみかたも OK(拾 = 扌+合 でも 扌+𠆢+一+口 でも)。スロットは 4つまで
+  const expand = (r, depth) => {
+    let outs = [r];
+    if (depth > 3) return outs;
+    r.forEach((p, i) => {
+      (KD.G[p] && K_RECIPES[p] || []).forEach(sub => {
+        const nr = r.slice(0, i).concat(sub, r.slice(i + 1));
+        if (nr.length <= 4) outs = outs.concat(expand(nr, depth + 1));
+      });
+    });
+    return outs;
+  };
+  Object.keys(K_RECIPES).forEach(k => {
+    const seen = new Set(), all = [];
+    K_RECIPES[k].forEach(r => expand(r, 0).forEach(x => { const key = x.slice().sort().join(''); if (!seen.has(key)) { seen.add(key); all.push(x); } }));
+    K_RECIPES[k] = all;
+    K_RECIPE_KEY[k] = all.map(x => x.slice().sort().join(''));
+  });
 }
 /* ---------- おなじ ぶしゅの よびわけ(いと・いとへん など)は おなじ もの あつかい ---------- */
 // かたちが おなじで、いちで よびかたが かわるだけの ものを まとめる
