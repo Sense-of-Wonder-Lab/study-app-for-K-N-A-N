@@ -138,7 +138,7 @@ function kFixRadQ(q, g) {
   return q;
 }
 // こうぼうで つかわない パーツの みため(index.html を さわらずに すむよう ここで たす)
-document.head.insertAdjacentHTML('beforeend', '<style>.kb-sep{grid-column:1/-1;flex-basis:100%;width:100%;margin:10px 0 2px;font-size:14px;color:var(--sub);text-align:left}.kb-tray button.off{opacity:.3;filter:grayscale(1);box-shadow:0 2px 0 var(--line)}.kb-slots.five{gap:3px}.kb-slots.five span{width:min(100px,13vw);height:min(100px,13vw)}.kb-slots.five b{font-size:22px}.kpick{background:var(--card)!important;color:inherit}.modal .box .kpick svg{width:100%;height:100%;animation:none}</style>');
+document.head.insertAdjacentHTML('beforeend', '<style>.kb-sep{grid-column:1/-1;flex-basis:100%;width:100%;margin:10px 0 2px;font-size:14px;color:var(--sub);text-align:left}.kb-tray button.on{background:color-mix(in srgb,#3cb371 24%,var(--card));box-shadow:0 4px 0 color-mix(in srgb,#3cb371 55%,var(--card))}.kb-tray button.off{opacity:.3;filter:grayscale(1);box-shadow:0 2px 0 var(--line)}.kb-slots.five{gap:3px}.kb-slots.five span{width:min(100px,13vw);height:min(100px,13vw)}.kb-slots.five b{font-size:22px}.kpick{background:var(--card)!important;color:inherit}.modal .box .kpick svg{width:100%;height:100%;animation:none}</style>');
 // かくすう(KanjiVG は 1かく = 1本の 線)
 function kStrokes(p) { return (KD.GL[p] || (KD.PA[p] || [[]])[0]).length; }
 
