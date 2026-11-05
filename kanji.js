@@ -415,6 +415,12 @@ function openKanjiCard(k, title) {
         row.innerHTML = `かんじずかん ${all.length - miss.length} / ${all.length} 字` + (miss.length ? `
           <details style="margin-top:4px"><summary style="cursor:pointer">まだの 字(${miss.length})</summary>
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${miss.slice(0, 200).map(k => `<span style="display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:2px 6px;background:var(--card)"><span style="width:34px;height:34px;display:inline-block">${kanjiSVG(k)}</span><small>Lv${KD.G[k]}・${esc(how(k))}</small></span>`).join('')}${miss.length > 200 ? `<small>ほか ${miss.length - 200} 字</small>` : ''}</div></details>` : ' 🎉 ぜんぶ!');
+        // いまの 手もちで つくれる 字(つかえる くみかたも)
+        const own = kOwned(el.dataset.pid);
+        const mk = kMakeable(el.dataset.pid).sort((a, b) => KD.G[a] - KD.G[b] || KD.SC[a] - KD.SC[b]);
+        const use = k => K_RECIPES[k].find(r => r.every(p => own[p])).join('+');
+        row.insertAdjacentHTML('beforeend', `<details style="margin-top:4px"${mk.length ? '' : ' hidden'}><summary style="cursor:pointer">いま つくれる 字(${mk.length})</summary>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${mk.map(k => `<span style="display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:2px 6px;background:var(--card)"><span style="width:34px;height:34px;display:inline-block">${kanjiSVG(k)}</span><small>${esc(use(k))}</small></span>`).join('')}</div></details>`);
         el.insertBefore(row, el.querySelector('.row:last-child'));
       });
     });
