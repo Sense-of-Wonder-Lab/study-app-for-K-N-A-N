@@ -68,8 +68,8 @@ h2{font-size:30px;margin:0;text-align:center}
 @keyframes hit{0%{transform:translateX(0);opacity:1}15%{transform:translateX(-14px) rotate(-6deg);opacity:.35}35%{transform:translateX(12px) rotate(5deg);opacity:1}55%{transform:translateX(-8px);opacity:.5}100%{transform:translateX(0);opacity:1}}
 .mon.attack svg{animation:atk .55s}
 @keyframes atk{0%{transform:scale(1)}30%{transform:scale(1.35) translateY(12px)}60%{transform:scale(.95)}100%{transform:scale(1)}}
-.mon.down svg{animation:down .9s forwards}
-@keyframes down{0%{transform:rotate(0) scale(1);opacity:1}100%{transform:rotate(200deg) scale(0);opacity:0}}
+.mon.down svg{animation:down 1.1s forwards}
+@keyframes down{0%{transform:none;filter:none;opacity:1}10%{transform:scale(1.25,.8);filter:brightness(3) saturate(0)}22%{transform:scale(.9,1.15) rotate(-8deg);filter:brightness(1.6)}34%{transform:translateY(-30px) rotate(10deg);filter:none}100%{transform:translateY(-160px) rotate(720deg) scale(.1);opacity:0}}
 .dmg{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);font-size:44px;font-weight:900;color:#ff5a5a;
   -webkit-text-stroke:2px #fff;pointer-events:none;opacity:0;white-space:nowrap}
 .dmg.show{animation:dmg .8s}
@@ -197,11 +197,11 @@ h2{font-size:30px;margin:0;text-align:center}
 .mon.trio .mc svg{flex:1 1 0;min-height:0;width:100%;height:auto}
 .mc-t{font-size:15px;font-weight:800;color:var(--sub);white-space:nowrap;line-height:1.3}
 .mc.near .mc-t{color:var(--ng)}
-.mon:not(.hit):not(.attack) .mc.near svg{animation:nervous .35s infinite}
+.mon:not(.hit):not(.attack):not(.down):not(.open) .mc.near svg{animation:nervous .35s infinite}
 @keyframes nervous{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
 .mon .mc.gone svg{animation:flee .9s forwards}
 @keyframes flee{0%{transform:none;opacity:1}20%{transform:translateY(-12px)}100%{transform:translateX(140%) translateY(-30px) rotate(25deg);opacity:0}}
-/* 60びょう アタック */
+/* 30びょう アタック */
 .mon.appear svg{animation:appear .6s}
 .tline.crit #ta-t{color:var(--ng)}
 .mon.ta-best{align-items:center;justify-content:space-around}
@@ -566,6 +566,36 @@ h2{font-size:30px;margin:0;text-align:center}
   }
 }
 
+
+/* やっつけ エフェクト */
+.arena.quake{animation:quake .45s}
+@keyframes quake{0%,100%{transform:none}15%{transform:translate(-9px,5px)}30%{transform:translate(8px,-6px)}45%{transform:translate(-6px,-4px)}60%{transform:translate(5px,4px)}80%{transform:translate(-2px,2px)}}
+.boom{position:absolute;width:0;height:0;pointer-events:none;z-index:5}
+.boom .flash{position:absolute;left:-150px;top:-150px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#fff 0,#fff6b0 35%,rgba(255,220,80,0) 70%);animation:bflash .5s forwards}
+@keyframes bflash{0%{transform:scale(.2);opacity:1}100%{transform:scale(1.4);opacity:0}}
+.boom .ring{position:absolute;left:-60px;top:-60px;width:120px;height:120px;border-radius:50%;border:8px solid #ffd23f;animation:bring .6s forwards}
+.boom .ring.r2{border-color:#ff7a3d;animation-delay:.1s;opacity:0}
+@keyframes bring{0%{transform:scale(.2);opacity:1}100%{transform:scale(2.6);opacity:0;border-width:1px}}
+.boom span{position:absolute;left:0;top:0;font-size:34px;line-height:1;opacity:0;animation:bfly .9s ease-out forwards}
+@keyframes bfly{0%{transform:translate(-50%,-50%) rotate(var(--a)) translateX(0) scale(.3);opacity:1}70%{opacity:1}100%{transform:translate(-50%,-50%) rotate(var(--a)) translateX(var(--d)) scale(1.1);opacity:0}}
+.boom b{position:absolute;left:0;top:0;white-space:nowrap;font-size:clamp(36px,7vw,60px);font-weight:900;color:#ffd23f;
+  -webkit-text-stroke:3px #c2410c;paint-order:stroke fill;text-shadow:0 4px 0 #9a3412;animation:btext 1.3s forwards}
+@keyframes btext{0%{transform:translate(-50%,-50%) scale(0) rotate(-15deg);opacity:0}25%{transform:translate(-50%,-50%) scale(1.35) rotate(4deg);opacity:1}40%{transform:translate(-50%,-50%) scale(1) rotate(-2deg)}85%{opacity:1}100%{transform:translate(-50%,-90%) scale(1);opacity:0}}
+/* けいさん プレイ: がめんの たかさに おさめる(たりない ときは キャラと ボタンが ちぢむ) */
+#s-calc-play.on{flex:none;height:calc(100vh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));height:calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));gap:10px;overflow:hidden}
+#s-calc-play .playwrap{min-height:0;gap:10px}
+#s-calc-play .stage{display:contents}
+#s-calc-play .arena{flex:0 1 auto;min-height:150px;display:flex;flex-direction:column}
+#s-calc-play .arena .mon{flex:0 1 auto;min-height:70px}
+#s-calc-play .qcard,#s-calc-play .mon-head,#s-calc-play .tline{flex:none}
+#s-calc-play .keypad{flex:1 1 auto;min-height:190px;max-height:470px;grid-auto-rows:1fr;margin-top:0}
+#s-calc-play .keypad button{padding:0;min-height:0}
+@media (max-height:700px){ #s-calc-play .keypad{gap:8px} #s-calc-play .keypad button{font-size:30px} }
+@media (orientation:landscape) and (min-width:900px){
+  #s-calc-play .playwrap{align-items:stretch;grid-template-rows:minmax(0,1fr)}
+  #s-calc-play .stage{display:flex;flex-direction:column;min-height:0}
+  #s-calc-play .keypad{align-self:center;height:min(470px,100%)}
+}
 </style>
 </head>
 <body>

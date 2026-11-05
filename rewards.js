@@ -1,15 +1,15 @@
 'use strict';
 /* ========== けいさんの ごほうび表 ==========
- * レベルごとに「あそびかた(バトル・60びょう など)」と、その なかの 3だんかいの 目標と ごほうびキャラを きめる
- * 目標: バトルは かかった びょう数(いない)、60びょう アタックは とけた 問題数(いじょう)
+ * レベルごとに「あそびかた(バトル・30びょう など)」と、その なかの 3だんかいの 目標と ごほうびキャラを きめる
+ * 目標: バトルは かかった びょう数(いない)、30びょう アタックは とけた 問題数(いじょう)
  * 数字は「とりあえず」。あとで ここを かえれば 調整できる
  */
 const KUKU_IDS = ['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9'];
 // むずかしい 問題は 目標を ゆるく
 const TIERS = {
-  easy: { battle: [100, 30, 15], ta: [10, 30, 50] },
-  mid:  { battle: [120, 45, 25], ta: [8, 20, 35] },
-  hard: { battle: [180, 90, 50], ta: [4, 10, 18] },
+  easy: { battle: [100, 30, 15], ta: [5, 15, 25] },
+  mid:  { battle: [120, 45, 25], ta: [4, 10, 18] },
+  hard: { battle: [180, 90, 50], ta: [2, 5, 9] },
 };
 const LEVEL_DIFF = {
   c8: 'mid', c6: 'mid', g3d: 'mid', g3e: 'mid', g3g: 'mid', g3h: 'mid',
@@ -19,12 +19,12 @@ function rewardModes(levelId) {
   if (KUKU_IDS.includes(levelId)) return [
     { key: 'order', name: 'じゅんばん', icon: '➡️', n: 9, order: true, tiers: [30, 10], kind: 'time' },
     { key: 'random', name: 'ランダム', icon: '🔀', n: 10, tiers: [50, 20, 10], kind: 'time' },
-    { key: 'ta', name: '60びょう アタック', icon: '⏱️', tiers: [10, 30, 50], kind: 'count' },
+    { key: 'ta', rec: 'ta30', name: '30びょう アタック', icon: '⏱️', tiers: [5, 15, 25], kind: 'count' },
   ];
   const t = TIERS[LEVEL_DIFF[levelId] || 'easy'];
   return [
     { key: 'battle', name: 'バトル(10もん)', icon: '⚔️', n: 10, tiers: t.battle, kind: 'time' },
-    { key: 'ta', name: '60びょう アタック', icon: '⏱️', tiers: t.ta, kind: 'count' },
+    { key: 'ta', rec: 'ta30', name: '30びょう アタック', icon: '⏱️', tiers: t.ta, kind: 'count' },
   ];
 }
 

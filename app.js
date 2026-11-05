@@ -159,6 +159,7 @@ const sound = (() => {
     ng: () => { tone(220, 0, 0.25, 'square', 0.08); },
     roar: () => { tone(140, 0, 0.4, 'sawtooth', 0.1, 70); },
     down: () => { tone(800, 0, 0.6, 'triangle', 0.15, 100); },
+    boom: () => { tone(160, 0, 0.35, 'square', 0.16, 40); tone(90, 0, 0.45, 'sawtooth', 0.12, 30); tone(1200, 0.04, 0.3, 'triangle', 0.08, 300); },
     fanfare: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * 0.12, 0.3, 'triangle')),
     end: () => [784, 659, 523].forEach((f, i) => tone(f, i * 0.2, 0.35, 'sine')),
     beep: () => tone(1000, 0, 0.08, 'square', 0.06),
@@ -184,7 +185,9 @@ const PREF_LEVELS = [
 ];
 const ALL_LEVELS = [...CALC_LEVELS, ...PREF_LEVELS];
 const SET_SIZE = 10;
-const TA_SEC = 60;
+const TA_SEC = 30;
+// 30びょうに かえたので きろくは べつに とる(60びょうの きろくは のこしてある)
+const TA_KEY = '_30';
 
 /* ========== メニュー ========== */
 let showAllCalc = false;
@@ -316,7 +319,7 @@ function openModes(l) {
   const p = profile(current), dress = isDress(), got = dress ? closetOf(current) : zukanOf(current);
   const rs = rewardSlots(p.style, l.id);
   const rows = rewardModes(l.id).map(md => {
-    const r = recOf(l.id, md.key);
+    const r = recOf(l.id, md.rec || md.key);
     const best = r ? (md.kind === 'time' ? `ベスト ${r.time}びょう` : `ベスト ${r.count}もん`) : 'まだ きろく なし';
     return `<button class="md-row" data-k="${md.key}"><span class="md-name">${md.icon} ${md.name}${md.n ? `<small>${md.n}もん</small>` : ''}</span>
       <span class="md-tiers">${md.tiers.map((t, i) => `<span class="md-t">${thumb(rs[md.key][i], dress, got)}<small>${tierLabel(md, t)}</small></span>`).join('')}</span>
@@ -357,7 +360,7 @@ function pickMonster(levelId) {
   return pick(pool);                                // あとは キラキラねらい
 }
 function giftOf(it) { return giftSVG(it.special ? DU_COLORS.gold[1] : (DU_COLORS[it.color] || DU_HAIR[it.color] || DU_COLORS.pink)[1]); }
-// 60びょう アタック: 1たいずつ でてくる。ぜんぶ たおしたら じこベストと いまの かずを ならべる
+// 30びょう アタック: 1たいずつ でてくる。ぜんぶ たおしたら じこベストと いまの かずを ならべる
 function renderTA() {
   const a = arena(), g = game, tiers = g.md.tiers, st = g.stage;
   const tline = `<div class="tline" id="ta-tl">⏱ のこり <b id="ta-t">${Math.ceil(g.left)}</b>びょう${st < tiers.length ? ` ・ <b id="ta-n">${g.count}</b>もん` : ''}</div>`;
@@ -396,13 +399,30 @@ function taProgress() {
   if (g.count < tiers[g.stage] || g.taBusy) return;
   g.taBusy = true;
   const mon = $('#mon');
-  if (mon) { mon.classList.remove('hit'); if (g.dress) { replay(mon, 'open'); sound.fanfare(); } else { replay(mon, 'down'); sound.down(); } }
+  if (mon) { mon.classList.remove('hit', 'appear'); replay(mon, g.dress ? 'open' : 'down'); boom(mon, g.dress ? 'ゲット!' : 'やっつけた!'); }
   setTimeout(() => {
     if (game !== g || screen !== 'calc-play') return;
     g.stage++; g.taBusy = false;
     renderTA();
     taProgress(); // アニメの あいだに すすんだ ぶんも はんえい
-  }, 800);
+  }, 1000);
+}
+// たおした しゅんかん: ひかって、ほしが とびちり、「やっつけた!」
+function boom(target, text) {
+  const a = arena(); if (!a || !target) return;
+  const ar = a.getBoundingClientRect(), r = target.getBoundingClientRect();
+  const b = document.createElement('div');
+  b.className = 'boom';
+  b.style.left = (r.left + r.width / 2 - ar.left) + 'px';
+  b.style.top = (r.top + r.height / 2 - ar.top) + 'px';
+  const em = game.dress ? ['✨', '💖', '🎀', '⭐'] : ['⭐', '💥', '✨', '⭐'];
+  let h = '<i class="flash"></i><i class="ring"></i><i class="ring r2"></i>';
+  for (let k = 0; k < 14; k++) h += `<span style="--a:${k * 360 / 14 + rnd(-10, 10)}deg;--d:${rnd(110, 190)}px;animation-delay:${rnd(0, 80)}ms">${em[k % em.length]}</span>`;
+  b.innerHTML = h + `<b>${text}</b>`;
+  a.appendChild(b);
+  replay(a, 'quake');
+  sound.boom();
+  setTimeout(() => b.remove(), 1400);
 }
 function arena() { return $('#' + game.kind.replace('ta', 'calc') + '-arena'); }
 function renderArena() {
@@ -472,8 +492,9 @@ function defeat() {
   setTimeout(() => {
     if (!still()) return;
     $('#mon').classList.remove('hit');
-    if (game.dress) { replay($('#mon'), 'open'); sound.fanfare(); } else { replay($('#mon'), 'down'); sound.down(); }
-    setTimeout(() => { if (still()) finish(); }, 950);
+    if (game.dress) { replay($('#mon'), 'open'); boom($('#mon'), 'ゲット!'); setTimeout(sound.fanfare, 250); }
+    else { replay($('#mon'), 'down'); boom($('#mon'), 'やっつけた!'); setTimeout(sound.down, 250); }
+    setTimeout(() => { if (still()) finish(); }, 1300);
   }, 350);
 }
 // 目標を クリアした だんかいの ごほうびを わたす
@@ -679,7 +700,8 @@ function showCalc() {
 }
 (function buildKeypad() {
   const box = $('#keypad');
-  ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', 'del'].forEach(k => {
+  // スマホの でんわと おなじ ならび(1が ひだりうえ)
+  ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'].forEach(k => {
     const b = document.createElement('button');
     if (k === 'del') { b.textContent = 'けす'; b.className = 'del'; }
     else if (k === '.') { b.textContent = '.'; b.id = 'key-dot'; b.className = 'dot'; }
@@ -752,13 +774,13 @@ function answerCalc() {
   }, game.kind === 'ta' ? 200 : 300);
 }
 
-/* ---------- 60びょう アタック ---------- */
+/* ---------- 30びょう アタック ---------- */
 let taTimer = null;
 function startTA(level, md) {
   md = md || rewardModes(level.id).find(x => x.key === 'ta');
   const ta = DB.ta[current] || {};
   game = { kind: 'ta', level, md, items: makeCalcItems(level, 30), i: 0, results: [], startAt: Date.now(), combo: 0, count: 0, left: TA_SEC,
-    stage: 0, prevBest: ta[level.id] || 0, dress: isDress() };
+    stage: 0, prevBest: ta[level.id + TA_KEY] || 0, dress: isDress() };
   $('#calc-title').textContent = '⏱️ ' + level.name;
   go('calc-play');
   setupKeys(level);
@@ -782,10 +804,10 @@ function finishTA() {
   locked = true;
   const n = game.count;
   const ta = DB.ta[current] = DB.ta[current] || {};
-  const prev = ta[game.level.id] || 0;
+  const prev = ta[game.level.id + TA_KEY] || 0;
   const isBest = n > prev;
-  if (isBest) ta[game.level.id] = n;
-  const r = DB.records[current] = DB.records[current] || {}, key = game.level.id + '_ta';
+  if (isBest) ta[game.level.id + TA_KEY] = n;
+  const r = DB.records[current] = DB.records[current] || {}, key = game.level.id + '_' + (game.md.rec || 'ta');
   if (!r[key] || n > r[key].count) r[key] = { count: n };
   const md = game.md, ids = rewardSlots(profile(current).style, game.level.id).ta;
   const achieved = md.tiers.map((t, i) => n >= t ? i : -1).filter(i => i >= 0);
@@ -796,7 +818,7 @@ function finishTA() {
   const nextI = md.tiers.findIndex(t => n < t);
   $('#r-stars').textContent = '⭐'.repeat(achieved.length) + '☆'.repeat(md.tiers.length - achieved.length);
   $('#r-score').textContent = `${n} もん せいかい`;
-  $('#r-detail').textContent = `${game.level.name}・60びょう` + (nextI >= 0 ? `・つぎは ${md.tiers[nextI]}もん!` : '');
+  $('#r-detail').textContent = `${game.level.name}・${TA_SEC}びょう` + (nextI >= 0 ? `・つぎは ${md.tiers[nextI]}もん!` : '');
   $('#r-best').textContent = isBest && prev ? `まえの ベストは ${prev}もん` : prev ? `ベスト ${prev}もん` : '';
   sound.fanfare();
 }
