@@ -356,27 +356,66 @@ function pickMonster(levelId) {
   if (!z[boss.id]) return boss;                     // 3たい あつめたら ボス登場
   return pick(pool);                                // あとは キラキラねらい
 }
+function giftOf(it) { return giftSVG(it.special ? DU_COLORS.gold[1] : (DU_COLORS[it.color] || DU_HAIR[it.color] || DU_COLORS.pink)[1]); }
+// 60びょう アタック: 1たいずつ でてくる。ぜんぶ たおしたら じこベストと いまの かずを ならべる
+function renderTA() {
+  const a = arena(), g = game, tiers = g.md.tiers, st = g.stage;
+  const tline = `<div class="tline" id="ta-tl">⏱ のこり <b id="ta-t">${Math.ceil(g.left)}</b>びょう${st < tiers.length ? ` ・ <b id="ta-n">${g.count}</b>もん` : ''}</div>`;
+  if (st >= tiers.length) {
+    const over = g.count > g.prevBest;
+    a.innerHTML = `<div class="mon-head"><span class="mon-name">🏆 ぜんぶ ${g.dress ? 'ゲット' : 'たおした'}!</span></div>
+      <div class="mon ta-best"><div><b>${g.prevBest}</b><span>じこベスト</span></div><div class="now${over ? ' over' : ''}" id="ta-now"><b id="ta-n">${g.count}</b><span id="ta-nl">${over ? 'ベスト こうしん!' : 'いま'}</span></div></div>${tline}<div class="dmg" id="dmg"></div>`;
+    return;
+  }
+  const id = rewardSlots(profile(current).style, g.level.id).ta[st];
+  let head, body;
+  if (g.dress) { head = `🎁 プレゼント ${st + 1}`; body = giftOf(duItem(id)); }
+  else { const c = charInfo(id); head = (c.boss ? '<span class="boss">ボス</span>' : '') + esc(c.name); body = c.svg(); }
+  a.innerHTML = `<div class="mon-head"><span class="mon-name">${head}</span><div class="hp${g.dress ? ' gift' : ''}"><i id="hp"></i></div><span class="hpnum" id="hpnum"></span></div>
+    <div class="mon${g.dress ? ' gift' : ''} appear" id="mon">${body}</div>${tline}<div class="dmg" id="dmg"></div>`;
+  updateTAHP();
+  const m = $('#mon'); m.addEventListener('animationend', () => m.classList.remove('appear'), { once: true });
+}
+function updateTAHP() {
+  const g = game, tiers = g.md.tiers, st = g.stage;
+  if (st >= tiers.length || !$('#hp')) return;
+  const from = st ? tiers[st - 1] : 0, N = tiers[st] - from, done = Math.min(N, g.count - from);
+  if (g.dress) { $('#hp').style.width = (done / N * 100) + '%'; $('#hpnum').textContent = `♥ ${done}/${N}`; return; }
+  $('#hp').style.width = ((N - done) / N * 100) + '%';
+  $('#hpnum').textContent = `HP ${N - done}`;
+}
+// せいかいの たびに: いまの キャラを たおしたら つぎを よぶ
+function taProgress() {
+  const g = game, tiers = g.md.tiers;
+  if (g.stage >= tiers.length) {
+    const now = $('#ta-now'), over = g.count > g.prevBest;
+    if (now) { now.classList.toggle('over', over); $('#ta-nl').textContent = over ? 'ベスト こうしん!' : 'いま'; }
+    return;
+  }
+  updateTAHP();
+  if (g.count < tiers[g.stage] || g.taBusy) return;
+  g.taBusy = true;
+  const mon = $('#mon');
+  if (mon) { mon.classList.remove('hit'); if (g.dress) { replay(mon, 'open'); sound.fanfare(); } else { replay(mon, 'down'); sound.down(); } }
+  setTimeout(() => {
+    if (game !== g || screen !== 'calc-play') return;
+    g.stage++; g.taBusy = false;
+    renderTA();
+    taProgress(); // アニメの あいだに すすんだ ぶんも はんえい
+  }, 800);
+}
 function arena() { return $('#' + game.kind.replace('ta', 'calc') + '-arena'); }
 function renderArena() {
   // もう一方の画面に のこった かいじゅうを けす(同じ id が ふたつ あると まちがった ほうが うごくため)
   $('#calc-arena').innerHTML = ''; $('#pref-arena').innerHTML = '';
   const a = arena();
-  if (game.kind === 'ta') {
-    a.innerHTML = `<div class="ta"><div class="t"><b id="ta-t">${Math.ceil(game.left)}</b><span>のこり びょう</span></div><div><b id="ta-n">${game.count}</b><span>もん せいかい</span></div></div><div class="dmg" id="dmg"></div>`;
-    return;
-  }
+  if (game.kind === 'ta') { renderTA(); return; }
   const m = game.mon;
   if (game.kind === 'calc') {
-    const goal = `<div class="tline">⏱ <b id="b-time">0.0</b>びょう<span id="b-goal">${esc(game.goalText)}</span></div>`;
-    if (game.dress) {
-      const it = duItem(game.target);
-      a.innerHTML = `<div class="mon-head"><span class="mon-name">🎁 プレゼント</span><div class="hp gift"><i id="hp"></i></div><span class="hpnum" id="hpnum"></span></div>
-        <div class="mon gift" id="mon">${giftSVG(it.special ? DU_COLORS.gold[1] : (DU_COLORS[it.color] || DU_HAIR[it.color] || DU_COLORS.pink)[1])}</div>${goal}<div class="dmg" id="dmg"></div>`;
-    } else {
-      const c = charInfo(game.target);
-      a.innerHTML = `<div class="mon-head"><span class="mon-name">${c.boss ? '<span class="boss">ボス</span>' : ''}${esc(c.name)}</span><div class="hp"><i id="hp"></i></div><span class="hpnum" id="hpnum"></span></div>
-        <div class="mon" id="mon">${c.svg()}</div>${goal}<div class="dmg" id="dmg"></div>`;
-    }
+    // はじめは みんな いて、じかんが たつと 1たいずつ にげだす
+    const cells = game.trio.map((c, k) => `<div class="mc${c.gone ? ' gone' : ''}" id="mc${k}">${game.dress ? giftOf(duItem(c.id)) : charInfo(c.id).svg()}<span class="mc-t" id="mct${k}">${c.gone ? 'にげた…' : c.t + 'びょう まで'}</span></div>`).join('');
+    a.innerHTML = `<div class="mon-head"><span class="mon-name">${game.dress ? '🎁 ' : ''}のこり <b id="trio-n">${game.trio.filter(c => !c.gone).length}</b>${game.dress ? 'こ' : 'たい'}</span><div class="hp${game.dress ? ' gift' : ''}"><i id="hp"></i></div><span class="hpnum" id="hpnum"></span></div>
+      <div class="mon trio${game.dress ? ' gift' : ''}" id="mon">${cells}</div><div class="tline">⏱ <b id="b-time">0.0</b>びょう</div><div class="dmg" id="dmg"></div>`;
     updateHP();
     return;
   }
@@ -391,6 +430,7 @@ function renderArena() {
   updateHP();
 }
 function updateHP() {
+  if (game.kind === 'ta') { updateTAHP(); return; }
   const N = game.n || SET_SIZE, left = N - game.i;
   if (game.dress) { $('#hp').style.width = (game.i / N * 100) + '%'; $('#hpnum').textContent = `♥ ${game.i}/${N}`; return; }
   $('#hp').style.width = (left / N * 100) + '%';
@@ -404,15 +444,15 @@ function popDmg(text, color) {
 function onCorrect() {
   game.combo = (game.combo || 0) + 1;
   sound.hit();
-  if (game.kind === 'ta') { popDmg(game.combo >= 3 ? `${game.combo}れんぞく!` : '⭕', '#2fae63'); return; }
   const mon = $('#mon');
+  if (game.kind === 'ta' && (game.stage >= game.md.tiers.length || game.taBusy || !mon)) { popDmg(game.combo >= 3 ? `${game.combo}れんぞく!` : '⭕', '#2fae63'); return; }
   replay(mon, 'hit');
   popDmg(game.combo >= 3 ? `${game.combo}れんぞく!` : game.dress ? pick(['キラッ!', 'すてき!', 'いいね!', 'かわいい!']) : pick(['ドカン!', 'バシッ!', 'ズバッ!', 'ポカッ!']), game.dress ? '#ff5d8f' : '');
 }
 function onWrong(wrapSel) {
   game.combo = 0;
   sound.ng();
-  if (game.kind !== 'ta' && !game.dress) { replay($('#mon'), 'attack'); setTimeout(sound.roar, 120); }
+  if (!game.dress && $('#mon') && (game.kind !== 'ta' || (game.stage < game.md.tiers.length && !game.taBusy))) { replay($('#mon'), 'attack'); setTimeout(sound.roar, 120); }
   replay($(wrapSel), 'shake');
 }
 function showFb(sel, ok) {
@@ -563,10 +603,9 @@ function startCalc(level, md) {
   } else items = makeCalcItems(level, n);
   const dress = isDress(), got = dress ? closetOf(current) : zukanOf(current);
   const ids = rewardSlots(profile(current).style, level.id)[md.key];
-  const ti = ids.findIndex(id => !got[id]);
-  const target = ids[ti >= 0 ? ti : ids.length - 1];
-  const goalText = ti >= 0 ? ` ・ めざせ ${md.tiers[ti]}びょう` : ' ・ ぜんぶ ゲット!';
-  game = { kind: 'calc', level, md, n, items, i: 0, results: [], startAt: Date.now(), elapsed: 0, combo: 0, target, goalText, dress };
+  // ids[k] は md.tiers[k] びょう を すぎると にげる
+  const trio = ids.map((id, k) => ({ id, t: md.tiers[k], gone: false }));
+  game = { kind: 'calc', level, md, n, items, i: 0, results: [], startAt: Date.now(), elapsed: 0, combo: 0, trio, dress };
   $('#calc-title').textContent = `${level.name}・${md.name}`;
   go('calc-play');
   setupKeys(level);
@@ -582,7 +621,28 @@ function startCalc(level, md) {
     if (game.done || document.visibilityState !== 'visible') return;
     game.elapsed += Math.min(dt, 0.5);
     const t = $('#b-time'); if (t) t.textContent = game.elapsed.toFixed(1);
+    checkFlee();
   }, 100);
+}
+// じかんぎれの キャラが にげる(けっかの はんていと おなじく 0.1びょう で まるめて くらべる)
+function checkFlee() {
+  const sec = Math.round(game.elapsed * 10) / 10;
+  game.trio.forEach((c, k) => {
+    const el = $('#mc' + k), lab = $('#mct' + k);
+    if (c.gone || !el) return;
+    if (sec > c.t) {
+      c.gone = true;
+      el.classList.remove('near'); el.classList.add('gone');
+      lab.textContent = 'にげた…';
+      $('#trio-n').textContent = game.trio.filter(x => !x.gone).length;
+      sound.roar();
+      popDmg(game.dress ? 'とんでった!' : 'にげた!', '#888');
+      return;
+    }
+    const left = Math.ceil(c.t - sec);
+    el.classList.toggle('near', left <= 5);
+    lab.textContent = left <= 5 ? `あと ${left}びょう!` : `${c.t}びょう まで`;
+  });
 }
 // 小数点ボタンは 小数の レベルだけ
 function setupKeys(level) { $('#key-dot').style.visibility = level.dec ? 'visible' : 'hidden'; }
@@ -670,7 +730,8 @@ function answerCalc() {
     onCorrect();
     game.i++;
     if (game.kind === 'ta') {
-      game.count++; $('#ta-n').textContent = game.count;
+      game.count++; const tn = $('#ta-n'); if (tn) tn.textContent = game.count;
+      taProgress();
       setTimeout(() => { if (screen === 'calc-play' && game.kind === 'ta' && game.left > 0) showCalc(); }, 120);
       return;
     }
@@ -695,7 +756,9 @@ function answerCalc() {
 let taTimer = null;
 function startTA(level, md) {
   md = md || rewardModes(level.id).find(x => x.key === 'ta');
-  game = { kind: 'ta', level, md, items: makeCalcItems(level, 30), i: 0, results: [], startAt: Date.now(), combo: 0, count: 0, left: TA_SEC };
+  const ta = DB.ta[current] || {};
+  game = { kind: 'ta', level, md, items: makeCalcItems(level, 30), i: 0, results: [], startAt: Date.now(), combo: 0, count: 0, left: TA_SEC,
+    stage: 0, prevBest: ta[level.id] || 0, dress: isDress() };
   $('#calc-title').textContent = '⏱️ ' + level.name;
   go('calc-play');
   setupKeys(level);
