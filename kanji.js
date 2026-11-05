@@ -397,3 +397,26 @@ function openKanjiCard(k, title) {
   $('#zk-modal').classList.add('on');
   $('#zk-close').onclick = () => $('#zk-modal').classList.remove('on');
 }
+
+/* ---------- 保護者画面: かんじずかんの まだの 字 ---------- */
+(function () {
+  const orig = RENDER.parent;
+  RENDER.parent = () => {
+    orig();
+    loadKanji(() => {
+      document.querySelectorAll('#parent-body .panel[data-pid]').forEach(el => {
+        const got = kanjiOf(el.dataset.pid);
+        const all = Object.keys(KD.G).sort((a, b) => KD.G[a] - KD.G[b] || KD.SC[a] - KD.SC[b]);
+        const miss = all.filter(k => !got[k]);
+        const how = k => K_ATOMIC.has(k) ? 'もんだいで もらえる' : (K_RECIPES[k] || [[]])[0].join('+');
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.style.cssText = 'color:var(--sub);font-size:16px;display:block';
+        row.innerHTML = `かんじずかん ${all.length - miss.length} / ${all.length} 字` + (miss.length ? `
+          <details style="margin-top:4px"><summary style="cursor:pointer">まだの 字(${miss.length})</summary>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${miss.slice(0, 200).map(k => `<span style="display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:2px 6px;background:var(--card)"><span style="width:34px;height:34px;display:inline-block">${kanjiSVG(k)}</span><small>Lv${KD.G[k]}・${esc(how(k))}</small></span>`).join('')}${miss.length > 200 ? `<small>ほか ${miss.length - 200} 字</small>` : ''}</div></details>` : ' 🎉 ぜんぶ!');
+        el.insertBefore(row, el.querySelector('.row:last-child'));
+      });
+    });
+  };
+})();
