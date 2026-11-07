@@ -331,7 +331,7 @@ RENDER['kobo'] = () => {
     const got = kanjiOf(current), usable = new Set();
     Object.keys(K_RECIPES).forEach(k => { if (!got[k]) K_RECIPES[k].forEach(r => r.forEach(p => usable.add(p))); });
     // もう つかわない パーツは まとめて いちばん したへ
-    const btn = p => `<button data-p="${esc(p)}" class="${kSel.includes(p) ? 'on' : ''}${KD.G[p] ? ' isk' : ''}${usable.has(p) ? '' : ' off'}"${usable.has(p) ? '' : ' disabled'}>${partSVG(p)}</button>`;
+    const btn = p => `<button data-p="${esc(p)}" class="${kSel.includes(p) ? 'on' : ''}${usable.has(p) ? '' : ' off'}"${usable.has(p) ? '' : ' disabled'}>${partSVG(p)}</button>`;
     const useL = list.filter(p => usable.has(p)), offL = list.filter(p => !usable.has(p));
     // かくすうが かわる ところに 線を 1本 いれる
     // かくすうの かたまりごとに 線を 1本。線の みぎはしに その かくすう
