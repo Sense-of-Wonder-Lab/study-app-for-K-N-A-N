@@ -167,7 +167,7 @@ function kFixRadQ(q, g) {
   return q;
 }
 // こうぼうで つかわない パーツの みため(index.html を さわらずに すむよう ここで たす)
-document.head.insertAdjacentHTML('beforeend', '<style>.kb-sep{grid-column:1/-1;flex-basis:100%;width:100%;margin:10px 0 2px;font-size:14px;color:var(--sub);text-align:left}.kb-tray button.on{background:color-mix(in srgb,#3cb371 24%,var(--card));box-shadow:0 4px 0 color-mix(in srgb,#3cb371 55%,var(--card))}.kb-tray button.dim{opacity:.3;filter:grayscale(1)}#kb-hintbtn.on{background:#ffd54a;color:#3b2f2a}.kb-tray button.off{opacity:.3;filter:grayscale(1);box-shadow:0 2px 0 var(--line)}.kb-slots.five{gap:3px}.kb-slots.five span{width:min(100px,13vw);height:min(100px,13vw)}.kb-slots.five b{font-size:22px}.kb-hr{grid-column:1/-1;display:flex;align-items:center;gap:6px;margin:2px 0;font-size:14px;color:var(--sub)}.kb-hr::before{content:"";flex:1;border-top:2px solid var(--line)}.kb-stats{display:flex;align-items:baseline;justify-content:center;gap:8px;font-size:15px;color:var(--sub)}.kb-stats b{font-size:26px;color:var(--ink);margin-right:2px}.kb-stats i{font-style:normal;font-size:22px}.kpick{background:var(--card)!important;color:inherit}.modal .box .kpick svg{width:100%;height:100%;animation:none}</style>');
+document.head.insertAdjacentHTML('beforeend', '<style>.kb-sep{grid-column:1/-1;flex-basis:100%;width:100%;margin:10px 0 2px;font-size:14px;color:var(--sub);text-align:left}.kb-tray button.on{background:color-mix(in srgb,#3cb371 24%,var(--card));box-shadow:0 4px 0 color-mix(in srgb,#3cb371 55%,var(--card))}.kb-tray button.dim{opacity:.3;filter:grayscale(1)}#kb-hintbtn.on{background:#ffd54a;color:#3b2f2a}.kb-tray button.off{opacity:.3;filter:grayscale(1);box-shadow:0 2px 0 var(--line)}.kb-slots.five{gap:3px}.kb-slots.five span{width:min(100px,13vw);height:min(100px,13vw)}.kb-slots.five b{font-size:22px}.kb-hr{grid-column:1/-1;display:flex;align-items:center;gap:6px;margin:2px 0;font-size:14px;color:var(--sub)}.kb-hr::before{content:"";flex:1;border-top:2px solid var(--line)}.kb-stats{display:flex;align-items:baseline;justify-content:center;gap:8px;font-size:15px;color:var(--sub)}.kb-stats b{font-size:26px;color:var(--ink);margin-right:2px}.kb-stats i{font-style:normal;font-size:22px}.kb-stats .sm{font-size:12px;margin-left:4px}.kb-stats .sm b{font-size:15px}.kpick{background:var(--card)!important;color:inherit}.modal .box .kpick svg{width:100%;height:100%;animation:none}</style>');
 // かくすう(KanjiVG は 1かく = 1本の 線)
 function kStrokes(p) { return (KD.GL[p] || (KD.PA[p] || [[]])[0]).length; }
 
@@ -355,7 +355,7 @@ RENDER['kobo'] = () => {
     // もう つかわない パーツは まとめて いちばん したへ
     // ヒント: いまの パーツだけで つくれる かんじに つかう パーツ
     const hintSet = new Set();
-    if (kHint) Object.keys(K_RECIPES).forEach(k => { if (!got[k]) K_RECIPES[k].forEach(r => { if (r.length <= smax && r.every(p => own[p])) r.forEach(p => hintSet.add(p)); }); });
+    Object.keys(K_RECIPES).forEach(k => { if (!got[k]) K_RECIPES[k].forEach(r => { if (r.length <= smax && r.every(p => own[p])) r.forEach(p => hintSet.add(p)); }); });
     const btn = p => `<button data-p="${esc(p)}" class="${kSel.includes(p) ? 'on' : ''}${usable.has(p) ? '' : ' off'}${kHint && usable.has(p) && !hintSet.has(p) ? ' dim' : ''}"${usable.has(p) ? '' : ' disabled'}>${partSVG(p)}</button>`;
     const useL = list.filter(p => usable.has(p)), offL = list.filter(p => !usable.has(p));
     // かくすうが かわる ところに 線を 1本 いれる
@@ -365,7 +365,7 @@ RENDER['kobo'] = () => {
       : '<p class="sub">まだ パーツが ないよ。かんじの もんだいを といて あつめよう!</p>';
     // いちばん うえ: つかえる / もってる / つくった
     const made = Object.keys(got).filter(k => !K_ATOMIC.has(k)).length;
-    $('#kb-stats').innerHTML = `<span><b>${useL.length}</b>つかえる</span><i>/</i><span><b>${list.length}</b>もってる</span><i>/</i><span><b>${made}</b>つくった</span>`;
+    $('#kb-stats').innerHTML = `<span><b>${hintSet.size}</b>すぐ つかえる</span><i>/</i><span><b>${useL.length}</b>つかえる</span><span class="sm"><b>${list.length}</b>もってる</span><span class="sm"><b>${made}</b>つくった</span>`;
     // おなじ パーツを 2かい えらんでも よい(林 = 木 + 木)
     $$('#kb-tray button').forEach(b => b.onclick = () => {
       if (kSel.length >= smax) return;
