@@ -44,8 +44,15 @@ function load() {
     if (!p.klv) p.klv = p.lv;
     if (p.bday === undefined) p.bday = ''; });
 }
+// ブラウザと ホーム画面アプリなど、まどが 2つ あっても ふるい ほうが あたらしい きろくを うわがき しないように、
+// ほぞんの たびに ばんごう(_rev)を ふやし、じぶんより あたらしい ばんごうが 保存されていたら うわがき せずに よみなおす
 function save() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) {}
+  try {
+    const cur = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (cur && (cur._rev || 0) > (DB._rev || 0)) { load(); return; }
+    DB._rev = (DB._rev || 0) + 1;
+    localStorage.setItem(STORE_KEY, JSON.stringify(DB));
+  } catch (e) {}
 }
 function today() {
   const d = new Date();
@@ -108,7 +115,8 @@ setInterval(() => {
   if (r <= 0) { save(); sound.end(); go('timeup'); return; }
   updateTimeUI();
 }, 1000);
-document.addEventListener('visibilitychange', () => { lastTick = performance.now(); save(); });
+// かくれる ときは ほぞん、もどった ときは まず ほぞんされている さいしんの きろくを よみなおす
+document.addEventListener('visibilitychange', () => { lastTick = performance.now(); if (document.visibilityState === 'visible') load(); else save(); });
 window.addEventListener('pagehide', save);
 
 function updateTimeUI() {
