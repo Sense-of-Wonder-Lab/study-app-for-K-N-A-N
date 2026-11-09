@@ -1143,10 +1143,16 @@ if ('serviceWorker' in navigator) {
     }).catch(() => {});
     let reloaded = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (reloaded) return; reloaded = true; save(); location.reload();
+      // ここで save() すると、べつの まど(ブラウザと アプリ など)の ふるい データで うわがきして しまうので しない
+      if (reloaded) return; reloaded = true; location.reload();
     });
   });
 }
+
+/* ========== べつの まどで データが かわったら よみなおす ==========
+   ブラウザと ホーム画面アプリを りょうほう ひらいていると、ふるい ほうが あたらしい きろくを
+   うわがき してしまう ことが あるので、ほかの まどの 保存を うけとったら DB を よみなおす */
+window.addEventListener('storage', e => { if (e.key === STORE_KEY && e.newValue) load(); });
 
 /* ========== 起動 ========== */
 load();
