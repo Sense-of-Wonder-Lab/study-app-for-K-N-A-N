@@ -513,6 +513,12 @@ function giveRewards(ids, achieved, kira) {
     if (!old) fresh.push(id);
     got[id] = { n: (old ? old.n : 0) + 1, kira: !!(old && old.kira) || kira, first: old ? old.first : today() };
   });
+  // きせかえ: この レベルの ごほうびを ぜんぶ もっていたら、あたらしい アイテム(ボーナス)を 1こ
+  if (dress && achieved.length && !fresh.length && game && game.level) {
+    const all = Object.values(rewardSlots('dressup', game.level.id) || {}).flat();
+    const b = all.every(id => got[id]) ? nextBonusItem(got) : null;
+    if (b) { got[b.id] = { n: 1, kira, first: today() }; fresh.push(b.id); }
+  }
   save();
   return fresh;
 }
@@ -583,7 +589,10 @@ function finish() {
   sound.fanfare();
 }
 function finishDress(n, time, isBest, prev) {
-  const c = closetOf(current), it = game.mon, kira = n === SET_SIZE;
+  const c = closetOf(current), kira = n === SET_SIZE;
+  let it = game.mon;
+  // この レベルの アイテムを ぜんぶ もっていたら、あたらしい アイテム(ボーナス)を 1こ
+  if (c[it.id] && DU_ITEMS.filter(x => x.level === game.level.id).every(x => c[x.id])) it = nextBonusItem(c) || it;
   const old = c[it.id];
   const isNew = !old, newKira = kira && !(old && old.kira);
   c[it.id] = { n: (old ? old.n : 0) + 1, kira: !!(old && old.kira) || kira, first: old ? old.first : today() };
@@ -953,7 +962,7 @@ function wear(it) {
   const o = outfitOf(current);
   if (it.cat === 'dress') o.dress = o.dress === it.id ? null : it.id;
   else if (it.cat === 'top' || it.cat === 'bottom') { o[it.cat] = it.id; o.dress = null; }
-  else if (['acc', 'hand', 'bg'].includes(it.cat)) o[it.cat] = o[it.cat] === it.id ? null : it.id;
+  else if (['acc', 'hat', 'hand', 'pet', 'bg'].includes(it.cat)) o[it.cat] = o[it.cat] === it.id ? null : it.id;
   else o[it.cat] = it.id;
   save();
 }
@@ -989,7 +998,7 @@ RENDER.closet = () => {
     const lv = ALL_LEVELS.find(l => l.id === it.level);
     const b = document.createElement('div');
     b.className = 'cl-item lock';
-    b.innerHTML = `<div class="q">?</div><span>${lv ? lv.emoji + ' ' + esc(lv.name) : ''}${it.special ? '<br>(とくべつ)' : ''}</span>`;
+    b.innerHTML = `<div class="q">?</div><span>${it.bonus ? '🌟 ぜんぶ あつめた レベルで もういちど クリア' : lv ? lv.emoji + ' ' + esc(lv.name) : ''}${it.special ? '<br>(とくべつ)' : ''}</span>`;
     box.appendChild(b);
   });
 };

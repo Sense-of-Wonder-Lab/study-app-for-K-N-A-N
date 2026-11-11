@@ -221,7 +221,7 @@ h2{font-size:30px;margin:0;text-align:center}
 .closet{display:flex;flex-direction:column;gap:14px}
 .cl-chara{background:var(--card);border-radius:28px;box-shadow:0 6px 0 var(--line);display:flex;justify-content:center;height:min(420px,36vh);padding:8px;overflow:hidden}
 .cl-chara svg{height:100%;width:auto;border-radius:20px}
-.cl-tabs{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.cl-tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .cl-tabs button{background:var(--card);border-radius:14px;padding:8px 2px;font-size:24px;box-shadow:0 3px 0 var(--line);display:flex;flex-direction:column;align-items:center;gap:2px}
 .cl-tabs button span{font-size:12px;font-weight:700;color:var(--sub)}
 .cl-tabs button.on{background:var(--accent)} .cl-tabs button.on span{color:#fff}
@@ -237,7 +237,7 @@ h2{font-size:30px;margin:0;text-align:center}
 @media (orientation:landscape) and (min-width:900px){
   .closet{display:grid;grid-template-columns:minmax(260px,.8fr) 1.4fr;align-items:start}
   .cl-chara{height:calc(100vh - 130px);position:sticky;top:12px}
-  .cl-tabs{grid-template-columns:repeat(4,1fr)}
+  .cl-tabs{grid-template-columns:repeat(5,1fr)}
 }
 /* ログイン */
 .login{background:var(--card);border-radius:24px;box-shadow:0 6px 0 var(--line);padding:22px;display:flex;flex-direction:column;gap:14px;max-width:520px;width:100%;margin:0 auto}
@@ -850,6 +850,7 @@ h2{font-size:30px;margin:0;text-align:center}
 <script src="dressup.js"></script>
 <script src="heroes.js"></script>
 <script src="rewards.js"></script>
+<script src="dressup-extra.js"></script>
 <script src="app.js"></script>
 <script src="kanji.js"></script>
 </body>
