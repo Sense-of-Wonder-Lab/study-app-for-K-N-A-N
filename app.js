@@ -937,12 +937,29 @@ RENDER.zukan = () => {
       b.className = 'zk-cell' + (got ? '' : ' none');
       const pic = got ? c.svg({ kira: got.kira }) : c.hero ? `<span class="sil">${c.svg()}</span>` : monsterSVG(MONSTERS.find(m => m.id === id), { silhouette: true });
       b.innerHTML = pic + (got ? esc(c.name) : (c.boss ? '??? (ボス)' : '???')) + (got && got.kira ? '<span class="k">✨</span>' : '');
-      b.onclick = () => { if (got) { sound.tap(); openMon(id, l); } };
+      b.onclick = () => { sound.tap(); if (got) openMon(id, l); else askGoLevel(l, pic, c.boss ? 'ボスは この ゲームで でてくるよ' : 'この ゲームで なかまに なるよ'); };
       row.appendChild(b);
     });
     box.appendChild(g);
   });
 };
+// ずかん・きせかえの まだの ところを おしたら、その ゲームに いけるように
+function goLevel(l) {
+  const p = profile(current);
+  if (PREF_LEVELS.includes(l)) { startPref(l); return; }
+  if (l.grade && p.lv !== l.grade) { p.lv = l.grade; save(); }
+  go('calc-menu');
+  openModes(l);
+}
+function askGoLevel(l, pic, text, btnText, title) {
+  $('#zk-box').classList.remove('wide');
+  $('#zk-box').innerHTML = `<div class="ask-pic">${pic || ''}</div><h3>${l ? `${l.emoji} ${esc(l.name)}` : title || '🌟 ボーナス'}</h3><p>${text}</p>
+    <div class="btnrow" style="margin-top:12px"><button class="btn gray" id="zk-close">とじる</button>${l || btnText ? `<button class="btn" id="zk-go">${btnText || '▶ あそびに いく'}</button>` : ''}</div>`;
+  $('#zk-modal').classList.add('on');
+  $('#zk-close').onclick = () => $('#zk-modal').classList.remove('on');
+  const g = $('#zk-go');
+  if (g) g.onclick = () => { sound.tap(); $('#zk-modal').classList.remove('on'); l ? goLevel(l) : go('calc-menu'); };
+}
 function openMon(id, lv) {
   const got = zukanOf(current)[id], c = charInfo(id);
   $('#zk-box').classList.remove('wide');
@@ -996,8 +1013,14 @@ RENDER.closet = () => {
   });
   locked.forEach(it => {
     const lv = ALL_LEVELS.find(l => l.id === it.level);
-    const b = document.createElement('div');
+    const b = document.createElement('button');
     b.className = 'cl-item lock';
+    b.onclick = () => {
+      sound.tap();
+      const q = '<div class="q" style="font-size:64px;font-weight:900;color:var(--sub)">?</div>';
+      if (it.bonus) askGoLevel(null, q, 'ごほうびを ぜんぶ あつめた レベルで、もういちど 目標を クリアすると もらえるよ', '▶ けいさんに いく');
+      else if (lv) askGoLevel(lv, q, it.special ? 'この ゲームの とくべつな ごほうびだよ' : 'この ゲームで もらえるよ');
+    };
     b.innerHTML = `<div class="q">?</div><span>${it.bonus ? '🌟 ぜんぶ あつめた レベルで もういちど クリア' : lv ? lv.emoji + ' ' + esc(lv.name) : ''}${it.special ? '<br>(とくべつ)' : ''}</span>`;
     box.appendChild(b);
   });

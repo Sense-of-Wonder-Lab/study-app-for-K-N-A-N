@@ -9,10 +9,16 @@ Object.assign(DU_SHAPES.hair, {
   horns: 'ツノヘア', explode: 'ばくはつヘア', bedhead: 'ねぐせヘア',
 });
 Object.assign(DU_SHAPES.dress, { kimono: 'きもの', sari: 'サリー', china: 'チャイナふく', maid: 'メイドふく', miko: 'みこさん', doctor: 'おいしゃさん', police: 'おまわりさん' });
+Object.assign(DU_SHAPES.dress, {
+  sarafan: 'サラファン(ロシア)', kilt: 'キルト(スコットランド)', dirndl: 'ディアンドル(ドイツ)', marine: 'マリンルック(フランス)', cowgirl: 'カウガール(アメリカ)',
+  astronaut: 'うちゅうひこうし', fire: 'しょうぼうし', ninja: 'にんじゃ', pirate: 'かいぞく', idol: 'アイドル', patissier: 'パティシエ',
+});
+Object.assign(DU_SHAPES.hand, { mic: 'マイク' });
 Object.assign(DU_SHAPES.bottom, { maxi: 'ロングスカート' });
 Object.assign(DU_SHAPES.shoes, { heel: 'ハイヒール' });
 Object.assign(DU_SHAPES.acc, { brooch: 'にこにこブローチ' });
 DU_SHAPES.hat = { straw: 'むぎわらぼうし', knit: 'ニットぼう', cap: 'キャップ', nurse: 'ナースキャップ', police: 'けいさつの ぼうし', chef: 'コックぼう', ribbonhat: 'リボンの ぼうし', witch: 'まじょの ぼうし' };
+Object.assign(DU_SHAPES.hat, { kokoshnik: 'ココシニク', cowboy: 'カウボーイハット', fire: 'しょうぼうの ヘルメット', pirate: 'かいぞくの ぼうし', ninja: 'にんじゃずきん', helmet: 'うちゅうの ヘルメット' });
 DU_SHAPES.pet = { dog: 'いぬ', cat: 'ねこ', rabbit: 'うさぎ', wani: 'ワニ', penguin: 'ペンギン', tako: 'タコ' };
 
 // もらえる じゅんばん(しゅるいが まざるように)。id は かえない こと(ほぞんデータの キー)
@@ -27,6 +33,12 @@ const DU_BONUS = [
   ['hat', 'police', 'navy'], ['pet', 'penguin', 'sky'], ['hair', 'superlong', 'violet'], ['hat', 'nurse', 'red'],
   ['hair', 'horns', 'red'], ['hat', 'ribbonhat', 'sakura'], ['hair', 'explode', 'black'], ['pet', 'tako', 'red'],
   ['hair', 'bedhead', 'brown'],
+  // 2026-11 ついか: せかいの いしょう・コスプレ
+  ['dress', 'sarafan', 'red'], ['hat', 'kokoshnik', 'red'], ['dress', 'ninja', 'navy'], ['hat', 'ninja', 'navy'],
+  ['dress', 'kilt', 'red'], ['dress', 'idol', 'pink'], ['hand', 'mic', 'pink'], ['dress', 'dirndl', 'mint'],
+  ['dress', 'astronaut', 'sky'], ['hat', 'helmet', 'sky'], ['dress', 'marine', 'navy'], ['dress', 'pirate', 'navy'],
+  ['hat', 'pirate', 'navy'], ['dress', 'cowgirl', 'red'], ['hat', 'cowboy', 'orange'], ['dress', 'fire', 'navy'],
+  ['hat', 'fire', 'red'], ['dress', 'patissier', 'pink'],
 ];
 DU_BONUS.forEach(([cat, shape, color]) => {
   const pal = cat === 'hair' ? DU_HAIR : DU_COLORS;

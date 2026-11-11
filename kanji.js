@@ -422,8 +422,15 @@ RENDER['kzukan'] = () => {
     $$('#kz-grades button').forEach(b => b.onclick = () => { sound.tap(); kZukanGrade = Number(b.dataset.g); RENDER.kzukan(); });
     const ks = Object.keys(KD.G).filter(k => KD.G[k] === kZukanGrade).sort((a, b) => KD.SC[a] - KD.SC[b] || a.localeCompare(b));
     $('#kz-count').textContent = `📖 ぜんぶで ${Object.keys(got).length} / 1026`;
-    $('#kz-grid').innerHTML = ks.map(k => got[k] ? `<button class="kz on" data-k="${k}">${kanjiSVG(k)}</button>` : '<span class="kz"></span>').join('');
-    $$('#kz-grid button').forEach(b => b.onclick = () => { sound.tap(); openKanjiCard(b.dataset.k); });
+    $('#kz-grid').innerHTML = ks.map(k => got[k] ? `<button class="kz on" data-k="${k}">${kanjiSVG(k)}</button>` : '<button class="kz" data-none="1"></button>').join('');
+    $$('#kz-grid button.on').forEach(b => b.onclick = () => { sound.tap(); openKanjiCard(b.dataset.k); });
+    // まだの ところを おしたら、その レベルの かんじゲームへ
+    $$('#kz-grid button[data-none]').forEach(b => b.onclick = () => {
+      sound.tap();
+      const g = kZukanGrade;
+      askGoLevel(null, '<div style="font-size:64px;font-weight:900;color:var(--sub)">?</div>', `レベル${g}の かんじだよ。かんじゲームで あつめよう`, '▶ かんじで あそぶ', '📖 かんじずかん');
+      $('#zk-go').onclick = () => { sound.tap(); $('#zk-modal').classList.remove('on'); kGrade = g; p.klv = g; save(); go('kanji'); };
+    });
   });
 };
 function openKanjiCard(k, title) {

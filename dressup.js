@@ -331,6 +331,8 @@ function duDress(it) {
       `<path d="M120,264 L180,264 L194,300 L106,300 Z" ${S}/><path d="M104,296 L196,296 L210,330 L90,330 Z" fill="${lt}" ${DL()}/><path d="M88,326 L212,326 L224,362 Q150,374 76,362 Z" ${S}/>` +
       `<path d="M120,268 Q150,278 180,268" stroke="${d}" stroke-width="5" fill="none"/>`;
     case 'kimono': case 'sari': case 'china': case 'maid': case 'miko': case 'doctor': case 'police': return duCostume(it, c, d, lt, S);
+    case 'sarafan': case 'kilt': case 'dirndl': case 'marine': case 'cowgirl':
+    case 'astronaut': case 'fire': case 'ninja': case 'pirate': case 'idol': case 'patissier': return duCostume2(it, c, d, lt, S);
     case 'princess': return duSleeves(c, 'puff') + bodice +
       `<path d="M120,262 Q150,272 180,262 Q236,300 248,392 Q150,410 52,392 Q64,300 120,262 Z" ${S}/>` +
       `<path d="M120,264 Q100,330 112,398 M150,272 L150,404 M180,264 Q200,330 188,398" stroke="${d}" stroke-width="3" fill="none" opacity=".6"/>` +
@@ -406,6 +408,88 @@ function duCostume(it, c, d, lt, S) {
   }
   return '';
 }
+// せかいの いしょう 2・コスプレ 2
+function duCostume2(it, c, d, lt, S) {
+  const L = DL(), w = '#ffffff', g = '#f6c445';
+  const sl = (col, kind) => duSleeves(col, kind);
+  const shirt = col => `<path d="M114,198 Q150,186 186,198 L186,292 Q150,298 114,292 Z" fill="${col}" ${L}/>`;
+  const pants = (col, y = 376) => `<path d="M118,272 L182,272 L176,${y} L155,${y} L150,300 L145,${y} L124,${y} Z" fill="${col}" ${L}/>`;
+  switch (it.shape) {
+    case 'sarafan': return sl(w, 'long') + shirt(w) +
+      `<path d="M126,206 L174,206 L182,262 L204,376 Q150,388 96,376 L118,262 Z" ${S}/><path d="M126,206 L130,196 M174,206 L170,196" ${DL(5)}/>` +
+      `<path d="M150,208 L150,380" stroke="${g}" stroke-width="7"/>` + [226, 252, 278, 304, 330, 356].map(y => `<circle cx="150" cy="${y}" r="3.5" fill="#fff" ${DL(1.2)}/>`).join('') +
+      `<path d="M100,364 Q150,374 200,364" fill="none" stroke="${g}" stroke-width="6"/>` +
+      [112, 134, 166, 188].map(x => `<path d="M${x},${358 + Math.abs(x - 150) * .1} l5,-6 5,6 -5,6 Z" fill="${lt}"/>`).join('');
+    case 'kilt': {
+      let tart = '';
+      [124, 140, 156, 172].forEach(x => tart += `<path d="M${x},274 L${x + (x - 150) * .3},330" stroke="${d}" stroke-width="5" opacity=".8"/>`);
+      [286, 304, 320].forEach(y => tart += `<path d="M112,${y} L188,${y}" stroke="${d}" stroke-width="4" opacity=".7"/>`);
+      [132, 166].forEach(x => tart += `<path d="M${x},274 L${x + (x - 150) * .3},330" stroke="#fff" stroke-width="1.5" opacity=".8"/>`);
+      return sl(w, 'long') + shirt(w) + `<path d="M140,196 L150,214 L160,196" fill="none" ${DL(2)}/>` +
+        `<rect x="131" y="336" width="14" height="30" fill="#fff" ${DL(2)}/><rect x="155" y="336" width="14" height="30" fill="#fff" ${DL(2)}/>` +
+        `<path d="M131,342 L145,342 M155,342 L169,342" stroke="${c}" stroke-width="3"/>` +
+        `<path d="M116,270 L184,270 L192,330 L108,330 Z" ${S}/>` + tart + `<path d="M116,270 L184,270 L192,330 L108,330 Z" fill="none" ${L}/>` +
+        `<rect x="114" y="266" width="72" height="9" fill="#3b3140" ${DL(2)}/><path d="M140,280 L160,280 L162,304 Q150,312 138,304 Z" fill="#8a5a3c" ${DL(2)}/><circle cx="150" cy="290" r="3" fill="${g}"/>`;
+    }
+    case 'dirndl': return sl(w, 'puff') + shirt(w) + `<path d="M126,210 L174,210 L178,268 L122,268 Z" ${S}/>` +
+      [222, 236, 250].map(y => `<path d="M140,${y} L160,${y + 7} M160,${y} L140,${y + 7}" stroke="#fff" stroke-width="2"/>`).join('') +
+      `<path d="M118,264 L182,264 L210,346 Q150,360 90,346 Z" ${S}/><path d="M126,268 L174,268 L186,340 Q150,350 114,340 Z" fill="${lt}" ${DL(2.5)}/>` +
+      `<path d="M126,268 L174,268" stroke="${lt}" stroke-width="0"/><path d="M168,270 L182,262 L182,280 Z M168,270 L184,284 L172,290 Z" fill="${lt}" ${DL(2)}/>` +
+      [130, 150, 170].map(x => `<circle cx="${x}" cy="${310 + (x === 150 ? 10 : 0)}" r="4" fill="${c}" opacity=".7"/>`).join('');
+    case 'marine': {
+      let st = '';
+      for (let y = 206; y < 290; y += 12) st += `<path d="M116,${y} L184,${y}" stroke="${c}" stroke-width="5"/>`;
+      return sl(w, 'long') + `<path d="M118,272 L182,272 L200,330 Q150,342 100,330 Z" fill="#ff6f7d" ${L}/>` + shirt(w) + st + shirt('none') +
+        [[118, 200, 97, 272], [182, 200, 203, 272]].map(([a, b, x, y]) => [0, 1, 2, 3].map(k => { const t = .25 + k * .2; return `<circle cx="${a + (x - a) * t}" cy="${b + (y - b) * t}" r="0"/><path d="M${a + (x - a) * t - 9},${b + (y - b) * t} L${a + (x - a) * t + 9},${b + (y - b) * t}" stroke="${c}" stroke-width="4"/>`; }).join('')).join('') +
+        `<path d="M136,196 L150,210 L164,196 L170,212 L156,214 L160,236 L150,222 L140,236 L144,214 L130,212 Z" fill="#ff6f7d" ${DL(2)}/>`;
+    }
+    case 'cowgirl': {
+      let pl = '';
+      for (let x = 122; x < 184; x += 14) pl += `<path d="M${x},198 L${x},292" stroke="${d}" stroke-width="4" opacity=".55"/>`;
+      for (let y = 210; y < 292; y += 14) pl += `<path d="M114,${y} L186,${y}" stroke="${d}" stroke-width="4" opacity=".55"/>`;
+      const fr = (x0, x1) => { let f = ''; for (let x = x0; x <= x1; x += 6) f += `<path d="M${x},270 L${x},284" stroke="#8a5a3c" stroke-width="3" stroke-linecap="round"/>`; return f; };
+      return sl(c, 'long') + `<path d="M118,272 L182,272 L196,330 Q150,340 104,330 Z" fill="#6f8fc4" ${L}/><path d="M150,276 L150,334" stroke="#5574a8" stroke-width="2.5"/>` +
+        shirt(c) + pl + shirt('none') + fr(116, 138) + fr(162, 184) +
+        `<path d="M114,198 L138,194 L140,272 L114,272 Z M186,198 L162,194 L160,272 L186,272 Z" fill="#c08a5a" ${L}/>` +
+        `<path d="M168,224 l3,6 6,1 -4,4 1,6 -6,-3 -6,3 1,-6 -4,-4 6,-1 Z" fill="${g}" ${DL(1.2)}/>` +
+        `<rect x="114" y="268" width="72" height="9" fill="#5a3c2a" ${DL(2)}/><rect x="142" y="266" width="16" height="13" rx="3" fill="${g}" ${DL(1.5)}/>`;
+    }
+    case 'astronaut': return sl(w, 'long') + pants(w) + shirt(w) +
+      `<rect x="130" y="222" width="40" height="30" rx="5" fill="#e3e8f2" ${DL(2)}/>` + [[140, 232, '#ff6f7d'], [150, 232, '#8fe0c4'], [160, 232, '#ffe17d']].map(([x, y, f]) => `<circle cx="${x}" cy="${y}" r="3.5" fill="${f}" ${DL(1)}/>`).join('') +
+      `<rect x="138" y="242" width="24" height="5" rx="2" fill="${c}"/><rect x="114" y="270" width="72" height="10" fill="${c}" ${DL(2)}/>` +
+      `<circle cx="124" cy="212" r="6" fill="${c}" ${DL(1.5)}/><path d="M120,332 L142,332 M158,332 L180,332" stroke="${c}" stroke-width="5"/>` +
+      `<path d="M97,262 L97,276 M203,262 L203,276" stroke="${c}" stroke-width="22" stroke-linecap="round"/>`;
+    case 'fire': {
+      const y1 = '#ffe17d';
+      return sl(c, 'long') + pants(c) + shirt(c) + `<path d="M150,196 L150,292" stroke="${d}" stroke-width="3"/>` +
+        `<path d="M114,256 L186,256 M114,264 L186,264" stroke="${y1}" stroke-width="5"/><path d="M124,338 L144,338 M156,338 L176,338" stroke="${y1}" stroke-width="5"/>` +
+        `<path d="M99,248 L111,252 M201,248 L189,252" stroke="${y1}" stroke-width="5"/>` +
+        `<path d="M136,196 L150,208 L164,196" fill="${d}" ${DL(2)}/><rect x="160" y="216" width="16" height="12" rx="2" fill="${y1}" ${DL(1.5)}/>`;
+    }
+    case 'ninja': return sl(c, 'long') + pants(c) + shirt(c) +
+      `<path d="M134,194 L156,250 M166,194 L144,250" stroke="${d}" stroke-width="4"/>` +
+      `<rect x="114" y="262" width="72" height="12" fill="#ff6f7d" ${DL(2)}/><path d="M172,268 L186,290 L178,292 Z" fill="#ff6f7d" ${DL(1.5)}/>` +
+      [131, 155].map(x => [344, 354, 364].map(y => `<path d="M${x - 2},${y} L${x + 16},${y - 5}" stroke="${shade(c, 0.4)}" stroke-width="3"/>`).join('')).join('') +
+      `<path d="M98,254 L114,262 M202,254 L186,262" stroke="${shade(c, 0.4)}" stroke-width="3"/>`;
+    case 'pirate': return sl(w, 'puff') + `<path d="M118,272 L182,272 L180,330 L168,334 L162,326 L156,334 L150,300 L144,334 L138,326 L132,334 L120,330 Z" ${S}/>` +
+      shirt(w) + `<path d="M138,196 L150,226 L162,196" fill="${DU_SKIN}" ${DL(2)}/><path d="M144,214 L156,214 M144,220 L156,220" ${DL(1.5)}/>` +
+      `<path d="M114,198 L136,194 L138,272 L114,272 Z M186,198 L164,194 L162,272 L186,272 Z" fill="#3b3140" ${L}/>` +
+      `<path d="M114,262 L186,262 L186,276 L114,276 Z" fill="#ff6f7d" ${DL(2)}/><path d="M178,270 L190,300 L180,302 Z" fill="#ff6f7d" ${DL(1.5)}/>` +
+      `<circle cx="126" cy="230" r="3" fill="${g}"/><circle cx="126" cy="246" r="3" fill="${g}"/>`;
+    case 'idol': return sl(c, 'puff') + `<path d="M116,198 Q150,188 184,198 L180,262 L120,262 Z" ${S}/>` +
+      `<path d="M118,258 L182,258 L200,300 L100,300 Z" ${S}/><path d="M96,296 ${[0, 1, 2, 3, 4, 5].map(k => `Q${105 + k * 18},${312} ${114 + k * 18},${298}`).join(' ')} L204,298 Z" fill="#fff" ${DL(2)}/>` +
+      `<path d="M104,300 L196,300 L208,326 Q150,336 92,326 Z" ${S}/><path d="M92,322 ${[0, 1, 2, 3, 4, 5, 6].map(k => `Q${100 + k * 17},${340} ${108 + k * 17},${326}`).join(' ')} L210,326 Z" fill="#fff" ${DL(2)}/>` +
+      `<path d="M150,218 L128,206 L130,232 Z M150,218 L172,206 L170,232 Z" fill="#fff" ${DL(2)}/><circle cx="150" cy="218" r="6" fill="${d}" ${DL(1.5)}/>` +
+      `<path d="M120,258 Q150,266 180,258" fill="none" stroke="#fff" stroke-width="4"/>` +
+      [[118, 280], [180, 282], [150, 316], [124, 318]].map(([x, y]) => `<path d="M${x},${y - 5} L${x + 1.5},${y - 1.5} L${x + 5},${y} L${x + 1.5},${y + 1.5} L${x},${y + 5} L${x - 1.5},${y + 1.5} L${x - 5},${y} L${x - 1.5},${y - 1.5} Z" fill="${g}"/>`).join('');
+    case 'patissier': return sl(w, 'long') + pants('#3b3140') + shirt(w) +
+      [[136, 216], [136, 236], [136, 256], [164, 216], [164, 236], [164, 256]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.5" fill="#d8dbe8" ${DL(1.2)}/>`).join('') +
+      `<path d="M134,194 L150,206 L166,194 L162,210 L150,214 L138,210 Z" fill="${c}" ${DL(2)}/>` +
+      `<path d="M116,266 L184,266 L188,348 Q150,356 112,348 Z" ${S}/><rect x="114" y="262" width="72" height="8" fill="${d}" ${DL(1.5)}/>` +
+      `<rect x="136" y="290" width="28" height="20" rx="3" fill="${lt}" ${DL(1.5)}/><path d="M150,300 m-6,0 a6,4 0 1,0 12,0 a6,4 0 1,0 -12,0" fill="#ff8fb8"/>`;
+  }
+  return '';
+}
 // ぼうし(アクセと いっしょに つけられる)
 function duHat(it) {
   const c = duCol(it), d = shade(c, -0.2), lt = shade(c, 0.45);
@@ -430,6 +514,21 @@ function duHat(it) {
     case 'ribbonhat': return `<ellipse cx="150" cy="76" rx="78" ry="14" ${S}/><path d="M112,76 Q110,38 150,36 Q190,38 188,76 Q150,84 112,76 Z" ${S}/>` +
       `<path d="M112,64 Q150,72 188,64 L188,74 Q150,82 112,74 Z" fill="#fff" ${DL(2)}/>` +
       `<path d="M172,68 L196,52 L198,82 Z M172,68 L200,74 L184,94 Z" fill="#ff6f9a" ${DL(2)}/><circle cx="172" cy="69" r="6" fill="#ff8fb8" ${DL(2)}/>`;
+    case 'kokoshnik': return `<path d="M94,84 Q90,20 150,14 Q210,20 206,84 Q150,70 94,84 Z" ${S}/><path d="M104,80 Q102,30 150,26 Q198,30 196,80" fill="none" stroke="#f6c445" stroke-width="5"/>` +
+      [[118, 52], [132, 38], [150, 34], [168, 38], [182, 52]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="#fff" ${DL(1.2)}/>`).join('') + `<path d="M150,44 l8,12 -8,12 -8,-12 Z" fill="#ff6fa0" ${DL(1.5)}/>` +
+      [106, 120, 134, 150, 166, 180, 194].map(x => `<circle cx="${x}" cy="${82 - Math.abs(x - 150) * .08}" r="3" fill="#fff" ${DL(1)}/>`).join('');
+    case 'cowboy': return `<path d="M58,70 Q70,90 150,88 Q230,90 242,70 Q236,84 220,78 Q150,64 80,78 Q64,84 58,70 Z" ${S}/>` +
+      `<path d="M104,78 Q100,30 124,26 Q138,34 150,30 Q162,34 176,26 Q200,30 196,78 Q150,70 104,78 Z" ${S}/><path d="M104,70 Q150,62 196,70 L196,78 Q150,70 104,78 Z" fill="${d}" ${DL(2)}/>` +
+      `<path d="M150,32 L150,58" stroke="${d}" stroke-width="3"/><path d="M160,74 l2,4 4,1 -3,3 1,4 -4,-2 -4,2 1,-4 -3,-3 4,-1 Z" fill="#f6c445"/>`;
+    case 'fire': return `<path d="M84,94 Q82,24 150,20 Q218,24 216,94 Q232,104 226,116 L200,96 Q150,84 100,96 L74,116 Q68,104 84,94 Z" ${S}/>` +
+      `<path d="M150,22 L150,82 M118,30 L114,86 M182,30 L186,86" stroke="${d}" stroke-width="5"/><path d="M134,40 L166,40 L170,74 Q150,82 130,74 Z" fill="#f6c445" ${DL(2)}/>` +
+      `<path d="M150,48 l4,8 9,1 -7,6 2,9 -8,-5 -8,5 2,-9 -7,-6 9,-1 Z" fill="#ff6f7d"/>`;
+    case 'pirate': return `<path d="M70,82 Q100,30 150,40 Q200,30 230,82 Q190,62 150,70 Q110,62 70,82 Z" fill="#2c2833" ${DL()}/><path d="M76,78 Q110,58 150,64 Q190,58 224,78" fill="none" stroke="#f6c445" stroke-width="3"/>` +
+      `<circle cx="150" cy="50" r="9" fill="#fff"/><circle cx="146" cy="49" r="2.4" fill="#2c2833"/><circle cx="154" cy="49" r="2.4" fill="#2c2833"/><path d="M144,58 L156,58 M140,62 L160,70 M160,62 L140,70" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`;
+    case 'ninja': return `<path fill-rule="evenodd" d="M86,120 Q86,54 150,54 Q214,54 214,120 Q214,186 150,186 Q86,186 86,120 Z M104,122 Q150,110 196,122 L194,146 Q150,138 106,146 Z" ${S}/>` +
+      `<path d="M104,122 Q150,110 196,122" fill="none" ${DL(2)}/><path d="M212,96 L238,84 L232,100 L244,108 L214,106 Z" ${S}/><path d="M120,66 Q140,58 160,60" fill="none" stroke="${shade(c, 0.35)}" stroke-width="4" stroke-linecap="round"/>`;
+    case 'helmet': return `<circle cx="150" cy="116" r="84" fill="#d6ecff" opacity=".35" ${DL()}/><path d="M92,70 Q110,46 140,40" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".9"/>` +
+      `<circle cx="196" cy="58" r="5" fill="#fff" opacity=".8"/><path d="M96,176 Q150,212 204,176 L206,192 Q150,226 94,192 Z" fill="${c}" ${DL()}/>`;
     case 'witch': return `<ellipse cx="150" cy="78" rx="94" ry="16" ${S}/><path d="M108,78 Q130,52 140,26 Q150,4 190,-2 Q170,14 168,40 Q170,62 192,78 Q150,88 108,78 Z" ${S}/>` +
       `<path d="M112,70 Q150,80 190,70 L190,78 Q150,88 112,78 Z" fill="#f6c445" ${DL(2)}/><rect x="140" y="68" width="16" height="14" rx="2" fill="none" stroke="${DU_LINE}" stroke-width="2.5"/>` +
       `<path d="M132,46 l2,5 5,1 -4,3 1,5 -4,-3 -4,3 1,-5 -4,-3 5,-1 Z" fill="#fff6c9"/>`;
@@ -517,6 +616,8 @@ function duHand(it) {
     case 'bag': return `<path d="M203,276 Q218,268 230,296" fill="none" ${DL(3)}/><rect x="212" y="292" width="36" height="30" rx="8" ${S}/><path d="M212,304 L248,304" stroke="${d}" stroke-width="3"/><circle cx="230" cy="306" r="3.5" fill="#f6c445"/>`;
     case 'balloon': return `<path d="M203,276 Q214,230 232,190" fill="none" stroke="${DU_LINE}" stroke-width="2"/><ellipse cx="236" cy="162" rx="24" ry="29" ${S}/><path d="M228,148 Q232,140 240,140" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M232,190 L240,190 L236,196 Z" fill="${c}" ${DL(1.5)}/>`;
     case 'bouquet': return `<path d="M196,286 L210,252 L226,262 Z" fill="#a6e3a1" ${DL(2)}/>` + [[206, 246], [222, 250], [214, 236], [228, 238], [200, 236]].map(([x, y], k) => `<circle cx="${x}" cy="${y}" r="8" fill="${k % 2 ? c : '#fff'}" ${DL(1.5)}/>`).join('') + `<path d="M204,270 L214,266" stroke="#ff6fa0" stroke-width="5"/>`;
+    case 'mic': return `<path d="M203,280 L222,236" ${DL(10)}/><path d="M203,280 L222,236" stroke="#3b3140" stroke-width="5"/><circle cx="226" cy="226" r="14" fill="#c8ccd6" ${DL(2.5)}/>` +
+      `<path d="M216,220 L236,232 M218,230 L232,218 M222,214 L230,238" stroke="#9aa0ae" stroke-width="1.5"/><rect x="214" y="240" width="14" height="8" rx="2" fill="${c}" ${DL(1.5)} transform="rotate(24 221 244)"/>`;
     case 'parasol': return `<path d="M203,282 L222,170" ${DL(4)}/><path d="M164,186 Q222,112 280,190 Q266,180 251,188 Q237,176 222,184 Q207,176 193,188 Q179,178 164,186 Z" ${S}/><path d="M222,128 L222,184" stroke="${d}" stroke-width="2"/>`;
   }
   return '';
@@ -546,9 +647,10 @@ function charSVG(outfit, opt = {}) {
 const DU_THUMB_VB = { hair: '70 20 160 170', top: '78 170 144 140', bottom: '84 250 132 140', dress: '40 170 220 245', shoes: '108 320 84 84', acc: '70 0 160 120', hat: '50 -10 200 120', pet: '-4 280 128 128', hand: '160 120 120 210', bg: '0 0 300 420' };
 function itemSVG(it) {
   const uid = ++_duUid;
-  const HAND_VB = { wand: '196 168 70 118', bag: '196 262 60 66', balloon: '188 128 76 170', bouquet: '188 222 50 70', parasol: '160 112 124 176' };
+  const HAND_VB = { mic: '190 206 54 82', wand: '196 168 70 118', bag: '196 262 60 66', balloon: '188 128 76 170', bouquet: '188 222 50 70', parasol: '160 112 124 176' };
   const HAIR_VB = { afro: '50 15 200 200', explode: '40 0 220 220', mohawk: '60 -6 180 190', softcream: '60 -6 180 190', horns: '60 -6 180 190', bedhead: '56 6 188 190', braid: '60 40 180 260', drill: '56 40 188 240', superlong: '50 30 200 390', side: '44 30 190 240' };
-  const vb = it.cat === 'hand' ? HAND_VB[it.shape] : it.cat === 'hair' && HAIR_VB[it.shape] ? HAIR_VB[it.shape] : it.cat === 'acc' && it.shape === 'brooch' ? '128 186 80 80' : DU_THUMB_VB[it.cat];
+  const HAT_VB = { ninja: '70 40 180 160', helmet: '56 26 188 204', cowboy: '50 -10 200 120' };
+  const vb = it.cat === 'hand' ? HAND_VB[it.shape] : it.cat === 'hat' && HAT_VB[it.shape] ? HAT_VB[it.shape] : it.cat === 'hair' && HAIR_VB[it.shape] ? HAIR_VB[it.shape] : it.cat === 'acc' && it.shape === 'brooch' ? '128 186 80 80' : DU_THUMB_VB[it.cat];
   let s = `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">`;
   const ghost = `<g opacity=".25">${duBody()}${duHead()}</g>`;
   if (it.cat === 'bg') s += duBg(it, uid);
