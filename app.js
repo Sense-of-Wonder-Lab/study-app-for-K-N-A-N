@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '6.2.1';
+const APP_VERSION = '6.2.2';
 const STORE_KEY = 'manabi_v2'; // 5.0.0: 着せ替え・出題構成の刷新に伴い新しい保存領域を使う
 
 /* ========== テーマ(子どもごとの見た目) ========== */
@@ -84,7 +84,10 @@ let screen = 'profiles';
 const COUNTED = new Set(['home', 'calc-menu', 'pref-menu', 'calc-play', 'pref-play', 'result', 'zukan', 'closet', 'kanji', 'kplay', 'kobo', 'kzukan']);
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
+const PLAY_SCREENS = new Set(['calc-play', 'pref-play', 'kplay', 'kobo']);
+let pendingReload = false;
 function go(name) {
+  if (pendingReload && !PLAY_SCREENS.has(name)) { location.reload(); return; }
   if (COUNTED.has(name) && current && remainSec(profile(current)) <= 0) name = 'timeup';
   screen = name;
   $('#zk-modal').classList.remove('on');
@@ -1229,7 +1232,7 @@ if ('serviceWorker' in navigator) {
         t.querySelector('span').textContent = '新しいバージョンがあります';
         const b = t.querySelector('button');
         b.style.display = '';
-        b.onclick = () => w.postMessage('SKIP_WAITING');
+        b.onclick = () => { if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING'); setTimeout(() => location.reload(), 800); };
         t.classList.add('on');
       };
       if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
@@ -1246,7 +1249,9 @@ if ('serviceWorker' in navigator) {
     let reloaded = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       // ここで save() すると、べつの まど(ブラウザと アプリ など)の ふるい データで うわがきして しまうので しない
-      if (reloaded) return; reloaded = true; location.reload();
+      if (reloaded) return; reloaded = true;
+      // ゲームの とちゅうなら、メニューに もどった ときに よみなおす
+      if (PLAY_SCREENS.has(screen)) pendingReload = true; else location.reload();
     });
   });
 }
