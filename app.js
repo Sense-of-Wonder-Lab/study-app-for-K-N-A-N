@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '6.2.0';
+const APP_VERSION = '6.2.1';
 const STORE_KEY = 'manabi_v2'; // 5.0.0: 着せ替え・出題構成の刷新に伴い新しい保存領域を使う
 
 /* ========== テーマ(子どもごとの見た目) ========== */
@@ -1118,14 +1118,9 @@ RENDER.parent = () => {
       時間制限はアプリ内の仕組みなので、確実に止めたい場合は iPad のスクリーンタイム / Android のファミリーリンクも併用してください。</div>
     </div>
     <div class="panel"><h3>引っ越し・バックアップ</h3>
-      <div class="row" style="color:var(--sub);font-size:15px">全員分の記録・ずかん・きせかえ・設定(暗証番号を含む)をまとめて書き出します。移したい端末で「読み込む」と、その端末の記録は<b>まるごと置き換わります</b>(足し合わせではありません)。</div>
-      <div class="row"><button class="sbtn primary" id="f-exp-file">ファイルに保存</button><button class="sbtn" id="f-exp-code">ひっこしコードを表示</button></div>
-      <textarea id="f-code" rows="4" readonly style="display:none;width:100%;font-size:13px;word-break:break-all" onclick="this.select()"></textarea>
-      <div class="row" id="f-code-row" style="display:none"><button class="sbtn primary" id="f-copy">コードをコピー</button><span id="f-copy-msg" style="color:var(--sub);font-size:15px"></span></div>
-      <div class="row" style="margin-top:8px"><b>読み込む</b></div>
+      <div class="row" style="color:var(--sub);font-size:15px">全員分の記録・ずかん・きせかえ・設定(暗証番号を含む)をまとめて書き出します。保存したファイルを移したい端末で「ファイルから読み込む」と、その端末の記録は<b>まるごと置き換わります</b>(足し合わせではありません)。</div>
+      <div class="row"><button class="sbtn primary" id="f-exp-file">ファイルに保存</button></div>
       <div class="row"><button class="sbtn" id="f-imp-file">ファイルから読み込む</button><input type="file" id="f-imp-input" accept=".json,.txt,application/json,text/plain" style="display:none"></div>
-      <textarea id="f-imp-code" rows="3" placeholder="ひっこしコードを ここに貼り付け" style="width:100%;font-size:13px;word-break:break-all"></textarea>
-      <div class="row"><button class="sbtn" id="f-imp-go">貼り付けたコードで読み込む</button></div>
     </div>
     <div class="panel">
       <div class="row" style="color:var(--sub);font-size:13px">かんじの 字形・部首・ことばは KanjiVG(© Ulrich Apel, CC BY-SA 3.0)と KANJIDIC2・JMdict(© EDRDG, CC BY-SA 4.0)を もとに 作っています。辞書によって 部首の 決め方が ちがう 字は、部首の 問題に 出していません。</div>
@@ -1177,27 +1172,15 @@ RENDER.parent = () => {
       setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     } catch (e) { alert('書き出しに失敗しました'); }
   };
-  $('#f-exp-code').onclick = async () => {
-    try {
-      const t = $('#f-code'); t.value = await makeMoveCode();
-      t.style.display = ''; $('#f-code-row').style.display = ''; $('#f-copy-msg').textContent = `${t.value.length.toLocaleString()} 文字`;
-    } catch (e) { alert('書き出しに失敗しました'); }
-  };
-  $('#f-copy').onclick = async () => {
-    const t = $('#f-code');
-    try { await navigator.clipboard.writeText(t.value); }
-    catch (e) { t.select(); try { document.execCommand('copy'); } catch (e2) {} }
-    $('#f-copy-msg').textContent = 'コピーしました。LINE の自分あてトークなどに貼って、移したい端末で開いてください';
-  };
   $('#f-imp-file').onclick = () => $('#f-imp-input').click();
   $('#f-imp-input').onchange = async e => {
     const f = e.target.files[0]; e.target.value = '';
     if (f) importMoveCode(await f.text());
   };
-  $('#f-imp-go').onclick = () => importMoveCode($('#f-imp-code').value);
 };
 
-/* ========== 引っ越し・バックアップ(ひっこしコード) ==========
+/* ========== 引っ越し・バックアップ(ファイル) ==========
+   ファイルの中身は テキスト1行(下の形式)
    形式: "MANABI1:" + base64(gzip(JSON))。gzip が使えないブラウザでは "MANABI0:" + base64(JSON) */
 const MOVE_PREFIX_GZ = 'MANABI1:', MOVE_PREFIX_RAW = 'MANABI0:';
 function bytesToB64(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
@@ -1216,7 +1199,7 @@ async function parseMoveCode(text) {
     if (typeof DecompressionStream !== 'function') throw new Error('このブラウザでは読み込めません(ブラウザを最新にしてください)');
     u8 = await pipeBytes(b64ToBytes(t.slice(MOVE_PREFIX_GZ.length)), new DecompressionStream('gzip'));
   } else if (t.startsWith(MOVE_PREFIX_RAW)) u8 = b64ToBytes(t.slice(MOVE_PREFIX_RAW.length));
-  else throw new Error('ひっこしコードではないようです');
+  else throw new Error('まなびランドのバックアップファイルではないようです');
   const d = JSON.parse(new TextDecoder().decode(u8));
   if (!d || !Array.isArray(d.profiles)) throw new Error('データの形がちがいます');
   return d;
@@ -1224,7 +1207,7 @@ async function parseMoveCode(text) {
 async function importMoveCode(text) {
   let d;
   try { d = await parseMoveCode(text); }
-  catch (e) { alert('読み込めませんでした: ' + (e && e.message && /[ぁ-ん]/.test(e.message) ? e.message : 'コードが途中で切れていないか確認してください')); return; }
+  catch (e) { alert('読み込めませんでした: ' + (e && e.message && /[ぁ-ん]/.test(e.message) ? e.message : 'ファイルが壊れていないか確認してください')); return; }
   const names = d.profiles.map(p => p.name).join('・') || '(なし)';
   if (!confirm(`読み込むデータ: ${names}\n\nこの端末の記録はすべて置き換わります。よろしいですか?`)) return;
   let curRev = 0; try { curRev = (JSON.parse(localStorage.getItem(STORE_KEY) || 'null') || {})._rev || 0; } catch (e) {}
