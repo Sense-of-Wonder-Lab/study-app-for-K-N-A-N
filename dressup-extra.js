@@ -66,28 +66,30 @@ let _duMeshN = 0;
 const DU_MESH_PATH = {
   bangs: 'M88,128 Q84,56 150,54 Q216,56 212,128 Q206,108 198,96 L188,112 L176,92 L162,110 L150,90 L138,110 L124,92 L112,112 L102,96 Q94,108 88,128 Z',
   sideL: 'M90,110 Q84,140 92,148 Q100,136 102,120 Z',
+  sideR: 'M210,110 Q216,140 208,148 Q200,136 198,120 Z',
   pony: 'M196,72 Q252,70 250,140 Q256,200 236,250 Q228,262 222,246 Q234,190 220,140 Q214,110 190,96 Z',
 };
-// shapes: きりぬく かみの かたち / strands: きんいろに する ふさ / y0〜y1: ねもとの ぼかし
+// shapes: きりぬく かみの かたち / strands: きんいろに する ふさ('~' で はじまると ほそい 1本の すじ) / y0〜y1: ねもとの ぼかし
 function duMesh(shapes, strands, y0, y1) {
   const n = ++_duMeshN, ds = shapes.map(k => DU_MESH_PATH[k]);
   return `<defs><clipPath id="mc${n}">${ds.map(d => `<path d="${d}"/>`).join('')}</clipPath>` +
     `<linearGradient id="mg${n}" gradientUnits="userSpaceOnUse" x1="0" y1="${y0}" x2="0" y2="${y1}"><stop offset="0" stop-color="${DU_MESH}" stop-opacity="0"/><stop offset="1" stop-color="${DU_MESH}"/></linearGradient></defs>` +
-    `<g clip-path="url(#mc${n})">${strands.map(d => `<path d="${d}" fill="url(#mg${n})"/>`).join('')}</g>` +
+    `<g clip-path="url(#mc${n})">${strands.map(d => d.startsWith('~') ? `<path d="${d.slice(1)}" fill="none" stroke="url(#mg${n})" stroke-width="7" stroke-linecap="round"/>` : `<path d="${d}" fill="url(#mg${n})"/>`).join('')}</g>` +
     ds.map(d => `<path d="${d}" fill="none" ${DL()}/>`).join('');
 }
 const _duHairBack0 = duHairBack, _duHairFront0 = duHairFront, _duBg0 = duBg, _duPet0 = duPet;
 duHairBack = function (it) {
   let s = _duHairBack0(it);
-  if (it.color === 'mesh' && it.shape === 'pony') s += duMesh(['pony'], ['M206,82 L222,76 Q250,150 240,256 L228,256 Q238,160 206,82 Z'], 80, 120);
+  if (it.color === 'mesh' && it.shape === 'pony') s += duMesh(['pony'], ['~M210,84 Q238,118 238,172 Q240,214 230,252'], 84, 116);
   return s;
 };
 duHairFront = function (it) {
   let s = _duHairFront0(it);
   if (it.color === 'mesh') {
-    const strands = ['M143,54 L149,54 L147,116 L127,116 Z', 'M167,56 L173,56 L198,118 L179,118 Z'];
-    if (it.shape === 'short') strands.push('M84,104 L96,104 L100,152 L84,152 Z');
-    s += duMesh(it.shape === 'short' ? ['bangs', 'sideL'] : ['bangs'], strands, 58, 84);
+    // 左右 たいしょうに 1ふさずつ(ひだりの はしっこ・みぎの はしっこの まえがみ)
+    const strands = ['M127,56 L133,56 L121,118 L102,118 Z', 'M167,56 L173,56 L198,118 L179,118 Z'];
+    if (it.shape === 'short') strands.push('M84,104 L96,104 L100,152 L84,152 Z', 'M204,104 L216,104 L216,152 L200,152 Z');
+    s += duMesh(it.shape === 'short' ? ['bangs', 'sideL', 'sideR'] : ['bangs'], strands, 58, 84);
   }
   return s;
 };
