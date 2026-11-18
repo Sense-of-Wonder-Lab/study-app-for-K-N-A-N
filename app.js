@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '6.2.2';
+const APP_VERSION = '6.3.0';
 const STORE_KEY = 'manabi_v2'; // 5.0.0: 着せ替え・出題構成の刷新に伴い新しい保存領域を使う
 
 /* ========== テーマ(子どもごとの見た目) ========== */
